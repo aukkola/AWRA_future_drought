@@ -28,17 +28,17 @@ write_daily_flt <- function(data, variable, outdir) {
 write_daily_flt_lwdown <- function(tmean, tmin, swdown, variable, outdir) {
   
   #Get dates
-  dates <- getZ(data)
+  dates <- getZ(tmean)
   
   #Day of year
-  doy <- strftime(dates, format = "%j")
+  doy <- as.numeric(strftime(dates, format = "%j"))
   
   #Latitude
-  lat <- init(data, 'y')
+  lat <- raster::init(tmean, 'y')
   
   
   #Write daily flt files
-  for (n in 1:nlayers(data)) {
+  for (n in 1:length(dates)) {
     
     
     ### Calculate LWdown for the day ###
@@ -76,17 +76,17 @@ write_daily_flt_vpd <- function(tmean, tmin, variable, outdir) {
   
   
   #Get dates
-  dates <- getZ(data)
+  dates <- getZ(tmean)
   
   
   #Write daily flt files
-  for (n in 1:nlayers(data)) {
+  for (n in 1:length(dates)) {
     
     
     ### Calculate VPD for the day ###
     
     #Stack inputs for calc function
-    ins <- brick(tmean, tmin)
+    ins <- brick(tmean[[n]], tmin[[n]])
     
     
     #Calculate VPD using constant air pressure
@@ -103,7 +103,7 @@ write_daily_flt_vpd <- function(tmean, tmin, variable, outdir) {
                       day_stamp, ".flt")
     
     #Write output
-    writeRaster(lwdown, outfile, overwrite=TRUE)
+    writeRaster(vpd, outfile, overwrite=TRUE)
     
     
   }
