@@ -118,13 +118,13 @@ for (m in 1:length(models)) {
                                                                 outdir_all=outdir_all))
       
       
-      
-      parallel_process_flt(variable="vpd", awra_path, 
-                           model=models[m], 
-                           experiment=experiments[e], 
-                           bc_method=bc_methods[b],
-                           outdir_all=outdir_all)
-      
+      # 
+      # parallel_process_flt(variable="vpd", awra_path, 
+      #                      model=models[m], 
+      #                      experiment=experiments[e], 
+      #                      bc_method=bc_methods[b],
+      #                      outdir_all=outdir_all)
+      # 
          
     } #bc methods
 
@@ -134,7 +134,7 @@ for (m in 1:length(models)) {
 
 
 
-
+stopCluster(cl)
 
 
 

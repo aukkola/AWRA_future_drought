@@ -9,7 +9,7 @@ write_daily_flt <- function(data, variable, outdir) {
   #Write daily flt files
   for (n in 1:nlayers(data)) {
     
-    day_stamp <- format(dates[n], format="%m%d")
+    day_stamp <- format(dates[n], format="%Y%m%d")
     
     #Following Mengyuan's naming convention
     outfile <- paste0(outdir, "/", variable, "_", day_stamp, "_",
@@ -55,7 +55,7 @@ write_daily_flt_lwdown <- function(tmean, tmin, swdown, variable, outdir) {
     
     ### Write output ###
     
-    day_stamp <- format(dates[n], format="%m%d")
+    day_stamp <- format(dates[n], format="%Y%m%d")
     
     #Following Mengyuan's naming convention
     outfile <- paste0(outdir, "/", variable, "_", day_stamp, "_",
@@ -96,7 +96,7 @@ write_daily_flt_vpd <- function(tmean, tmin, variable, outdir) {
     
     ### Write output ###
     
-    day_stamp <- format(dates[n], format="%m%d")
+    day_stamp <- format(dates[n], format="%Y%m%d")
     
     #Following Mengyuan's naming convention
     outfile <- paste0(outdir, "/", variable, "_", day_stamp, "_",
