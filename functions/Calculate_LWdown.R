@@ -9,7 +9,7 @@
 #Temperature input in Kelvin (equations modified accordingly by 
 #removing conversion to K (+ 273.15))
 
-calculate_lwdown <- function(tmean_K, tmin_K, swdown_Wm2, latitude_deg DOY) {
+calculate_lwdown <- function(tmean_K, tmin_K, swdown_Wm2, latitude_deg, DOY) {
   
   #Convert Tmin from K to C
   tmin <- tmin_K - 273.15

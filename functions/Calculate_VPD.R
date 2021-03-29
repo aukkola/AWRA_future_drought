@@ -9,7 +9,7 @@
 #Assume constant air pressure of 100,000 Pa (see Mengyuan's GW paper)
 
 
-calculate_qair <- function(tmean, tmin, air_pressure=100000) {
+calculate_vpd <- function(tmean, tmin, air_pressure=100000) {
   
   
   #AWRA inputs are in Kelvin, convert to C here
@@ -27,18 +27,23 @@ calculate_qair <- function(tmean, tmin, air_pressure=100000) {
   #Vapour pressure deficit
   vpd <- sat_pressure - act_pressure
   
-  #Relative humidity (%)
-  relHum <- 100 * (1 - (vpd / sat_pressure))
+  #Convert from Pa to Hpa
+  vpd_hPa <- vpd * 0.01
+    
   
+  # #Relative humidity (%)
+  # relHum <- 100 * (1 - (vpd / sat_pressure))
+  # 
+  # 
+  # # Then specific humidity at saturation:
+  # ws <- 0.622 * sat_pressure / (air_pressure - sat_pressure)
+  # 
+  # # Then specific humidity:
+  # specHum <- (relHum/100) * ws
+  # 
+  # 
   
-  # Then specific humidity at saturation:
-  ws <- 0.622 * sat_pressure / (air_pressure - sat_pressure)
-  
-  # Then specific humidity:
-  specHum <- (relHum/100) * ws
-  
-  
-  return(specHum)
+  return(vpd_hPa)
   
 }
 
