@@ -28,7 +28,9 @@ source(paste0(path, "/scripts/functions/Calculate_LWdown.R"))
 
 #Extra variables that need to be calculated
 #(weather generator takes VPD (hPa) as input, converts it to Qair)
-extra_vars <- c("lwdown", "vpd")
+#Need 9am and 3pm values
+#(also need lwdown but calculate this from weather-generated values)
+extra_vars <- c("vpd_09", "vpd_15")
 
 
 

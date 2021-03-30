@@ -11,6 +11,8 @@ parallel_process_flt <- function(variable, outdir_all, awra_path, model,
   
   ### LWdown ###
   
+  #(not used, calculated using weather generated data)
+  
   if(variable == "lwdown") {
     
     #Get Tmean
@@ -37,31 +39,39 @@ parallel_process_flt <- function(variable, outdir_all, awra_path, model,
     
     
     
-    ### VPD ###
+  ### VPD ###
     
-  } else if (variable=="vpd") {
-    
-    
-    #Get Tmean
-    tmean <- brick(list.files(paste(awra_path, model, experiment, "r1i1p1", 
-                                    bc_method, "latest/day/tas/", sep="/"),
-                              full.names=TRUE), varname="tas")
-    
-    #Get Tmin
-    tmin <- brick(list.files(paste(awra_path, model, experiment, "r1i1p1", 
-                                   bc_method, "latest/day/tasmin/", sep="/"),
-                             full.names=TRUE), varname="tasmin")
+  } else if (variable %in% c("vpd_09", "vpd_15")) {
     
     
-    
-    
-    write_daily_flt_vpd(tmean=tmean, tmin=tmin, variable=variable,
-                        outdir=outdir)
+    if (variable == "vpd15") {
+      
+      #Get Tmax for 3pm VPD
+      tmax <- brick(list.files(paste(awra_path, model, experiment, "r1i1p1", 
+                                      bc_method, "latest/day/tasmax/", sep="/"),
+                                full.names=TRUE), varname="tasmax")
+      
+      write_daily_flt_vpd(tair=tmax, variable=variable,
+                          outdir=outdir)
       
       
       
+    } else if (variable == "vpd09") {
       
-      ### All other variables ###
+      #Get Tmin for 9am VPD
+      tmin <- brick(list.files(paste(awra_path, model, experiment, "r1i1p1", 
+                                     bc_method, "latest/day/tasmin/", sep="/"),
+                               full.names=TRUE), varname="tasmin")
+      
+      write_daily_flt_vpd(tair=tmin, variable=variable,
+                          outdir=outdir)
+      
+      
+    }
+    
+     
+  
+  ### All other variables ###
       
   } else {
     
