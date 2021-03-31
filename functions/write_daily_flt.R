@@ -90,7 +90,7 @@ write_daily_flt_vpd <- function(tair, variable, outdir) {
     
     
     #Calculate VPD using constant air pressure
-    vpd <- calc(tair, function(x) calculate_vpd(x))
+    vpd <- calc(tair[[n]], function(x) calculate_vpd(x))
     
     
     ### Write output ###
