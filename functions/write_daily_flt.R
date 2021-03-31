@@ -72,11 +72,11 @@ write_daily_flt_lwdown <- function(tmean, tmin, swdown, variable, outdir) {
 
 
 #Daily VPD flt files 
-write_daily_flt_vpd <- function(tmean, tmin, variable, outdir) {
+write_daily_flt_vpd <- function(tair, variable, outdir) {
   
   
   #Get dates
-  dates <- getZ(tmean)
+  dates <- getZ(tair)
   
   
   #Write daily flt files
@@ -86,12 +86,11 @@ write_daily_flt_vpd <- function(tmean, tmin, variable, outdir) {
     ### Calculate VPD for the day ###
     
     #Stack inputs for calc function
-    ins <- brick(tmean[[n]], tmin[[n]])
+    #ins <- brick(tmean[[n]], tmin[[n]])
     
     
     #Calculate VPD using constant air pressure
-    vpd <- calc(ins, function(x) calculate_vpd(tmean=x[1], 
-                                                 tmin=x[2]))
+    vpd <- calc(tair, function(x) calculate_vpd(x))
     
     
     ### Write output ###
