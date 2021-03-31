@@ -7,10 +7,15 @@ library(parallel )
 #clear R environment
 rm(list=ls(all=TRUE))
 
-
+#Main path
 path <- "/g/data/w35/amu561/Steven_CABLE_runs"
 
+#output on scratch
+out_path <- "/scratch/w35/amu561/Steven_CABLE_runs" 
+
+#AWRA inputs
 awra_path <- "/g/data/wj02/COMPLIANT/HMINPUT/output/AUS-5/BoM/"
+
 
 #Source functions
 source(paste0(path, "/scripts/functions/parallel_process_flt.R"))
@@ -89,7 +94,7 @@ for (m in 1:length(models)) {
       
       
       #Output directory for all variables
-      outdir_all <- paste(path, "CABLE_inputs/Weather_generator_inputs", models[m],
+      outdir_all <- paste(out_path, "/CABLE_inputs/Weather_generator_inputs", models[m],
                           experiments[e], bc_methods[b], sep="/")
       
       #Create directory
