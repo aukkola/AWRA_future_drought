@@ -8,6 +8,8 @@ parallel_process_flt <- function(variable, outdir_all, awra_path, model,
   
   dir.create(outdir, recursive=TRUE)
   
+  print(paste0("variable: ", variable))
+  
   
   ### LWdown ###
   
@@ -44,7 +46,7 @@ parallel_process_flt <- function(variable, outdir_all, awra_path, model,
   } else if (variable %in% c("vpd_09", "vpd_15")) {
     
     
-    if (variable == "vpd15") {
+    if (variable == "vpd_15") {
       
       #Get Tmax for 3pm VPD
       tmax <- brick(list.files(paste(awra_path, model, experiment, "r1i1p1", 
@@ -56,7 +58,7 @@ parallel_process_flt <- function(variable, outdir_all, awra_path, model,
       
       
       
-    } else if (variable == "vpd09") {
+    } else if (variable == "vpd_09") {
       
       #Get Tmin for 9am VPD
       tmin <- brick(list.files(paste(awra_path, model, experiment, "r1i1p1", 
@@ -67,6 +69,8 @@ parallel_process_flt <- function(variable, outdir_all, awra_path, model,
                           outdir=outdir)
       
       
+    } else {
+      stop("VPD variable name not recognised")
     }
     
      
@@ -83,6 +87,28 @@ parallel_process_flt <- function(variable, outdir_all, awra_path, model,
     #Read data
     data <- brick(data_file, varname=variable)
     
+    #Not needed, doing this in fortran code
+    # #Convert temperature from K to C
+    # if (variable %in% c("tas", "tasmax", "tasmin")) {
+    #   
+    #   data <- data - 273.15
+    #   
+    # }
+    # 
+    # #Convert rainfall from mm/s to mm/day
+    # if (variable == "pr") {
+    #   
+    #   data <- data * 86400
+    #   
+    # }
+    # 
+    # #Convert SWdown from W m-2 to MJ/day
+    # if(variable == "rsds") {
+    #   
+    #   data <- data * 86400 / 10**6
+    #   
+    # }
+    # 
     
     #Write daily flts
     write_daily_flt(data=data, variable=variable, 

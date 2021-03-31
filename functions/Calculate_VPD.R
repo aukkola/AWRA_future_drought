@@ -28,7 +28,7 @@ calculate_vpd <- function(tair, air_pressure=100000) {
   act_pressure <- 610.8 * exp((17.27 * tair) / (237.3 + tair)) #610.8 * exp((17.27 * tmin) / (237.3 + tmin))
   
   
-  #Vapour pressure deficit
+  #Vapour pressure deficit (Pa)
   vpd <- sat_pressure - act_pressure
   
   #Convert from Pa to Hpa

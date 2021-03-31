@@ -16,7 +16,7 @@ awra_path <- "/g/data/wj02/COMPLIANT/HMINPUT/output/AUS-5/BoM/"
 source(paste0(path, "/scripts/functions/parallel_process_flt.R"))
 source(paste0(path, "/scripts/functions/write_daily_flt.R"))
 source(paste0(path, "/scripts/functions/Calculate_VPD.R"))
-source(paste0(path, "/scripts/functions/Calculate_LWdown.R"))
+#source(paste0(path, "/scripts/functions/Calculate_LWdown.R"))
 
 
 
@@ -55,7 +55,7 @@ clusterExport(cl, list('models', 'parallel_process_flt',
               'write_daily_flt_vpd',
               'write_daily_flt',
               'calculate_vpd',
-              'calculate_lwdown',
+              #'calculate_lwdown',
               'awra_path'))
 
 clusterEvalQ(cl, library(raster))
