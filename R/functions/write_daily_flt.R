@@ -15,6 +15,9 @@ write_daily_flt <- function(data, variable, outdir) {
     outfile <- paste0(outdir, "/", variable, "_", day_stamp, "_",
                       day_stamp, ".flt")
     
+    #Add this to avoid duplicate processing
+    if (file.exists(outfile)) next
+    
     #Write output
     writeRaster(data[[n]], outfile, overwrite=TRUE)
     
@@ -72,11 +75,11 @@ write_daily_flt_lwdown <- function(tmean, tmin, swdown, variable, outdir) {
 
 
 #Daily VPD flt files 
-write_daily_flt_vpd <- function(tair, variable, outdir) {
+write_daily_flt_vpd <- function(tmax, tmin, variable, outdir) {
   
   
   #Get dates
-  dates <- getZ(tair)
+  dates <- getZ(tmax)
   
   
   #Write daily flt files
@@ -86,11 +89,11 @@ write_daily_flt_vpd <- function(tair, variable, outdir) {
     ### Calculate VPD for the day ###
     
     #Stack inputs for calc function
-    #ins <- brick(tmean[[n]], tmin[[n]])
+    ins <- brick(tmax[[n]], tmin[[n]])
     
     
     #Calculate VPD using constant air pressure
-    vpd <- calc(tair[[n]], function(x) calculate_vpd(x))
+    vpd <- calc(ins, function(x) calculate_vpd(tmax=x[1], tmin=x[2]))
     
     
     ### Write output ###

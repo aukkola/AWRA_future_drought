@@ -12,20 +12,20 @@
 #vapour pressure to obtain "9am" VPD value for weather generator
 #and tmax to obtain "3pm" value
 
-calculate_vpd <- function(tair, air_pressure=100000) {
+calculate_vpd <- function(tmax, tmin, air_pressure=100000) {
   
   
   #AWRA inputs are in Kelvin, convert to C here
-  tair <- tair - 273.15
-  #tmean <- tmean - 273.15
-  #tmin  <- tmin - 273.15
+  #tair <- tair - 273.15
+  tmax  <- tmax - 273.15
+  tmin  <- tmin - 273.15
   
   #Saturation vapour pressure (eq. 35), in Pa
-  sat_pressure <- 610.8 * exp((17.27 * tair) / (237.3 + tair)) #610.8 * exp((17.27 * tmean) / (237.3 + tmean)) 
+  sat_pressure <- 610.8 * exp((17.27 * tmax) / (237.3 + tmax)) #610.8 * exp((17.27 * tmean) / (237.3 + tmean)) 
   
   
   #Actual vapour pressure (eq. 36), in Pa
-  act_pressure <- 610.8 * exp((17.27 * tair) / (237.3 + tair)) #610.8 * exp((17.27 * tmin) / (237.3 + tmin))
+  act_pressure <- 610.8 * exp((17.27 * tmin) / (237.3 + tmin)) #610.8 * exp((17.27 * tmin) / (237.3 + tmin))
   
   
   #Vapour pressure deficit (Pa)

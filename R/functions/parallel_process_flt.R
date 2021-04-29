@@ -45,27 +45,44 @@ parallel_process_flt <- function(variable, outdir_all, awra_path, model,
     
   } else if (variable %in% c("vpd_09", "vpd_15")) {
     
+    #Use Tmax to calculate 3pm saturated vapour pressure and
+    #Tmean to calculate 9am saturated vapour pressure
+    #Tmin always used to calculate actual vapour pressure
+    #otherwise difficult to create a diurnal cycle
     
     if (variable == "vpd_15") {
       
-      #Get Tmax for 3pm VPD
+      #Get Tmax for saturated VP
       tmax <- brick(list.files(paste(awra_path, model, experiment, "r1i1p1", 
                                       bc_method, "latest/day/tasmax/", sep="/"),
                                 full.names=TRUE), varname="tasmax")
       
-      write_daily_flt_vpd(tair=tmax, variable=variable,
+      #Get Tmin for actual VP
+      tmin <- brick(list.files(paste(awra_path, model, experiment, "r1i1p1", 
+                                     bc_method, "latest/day/tasmin/", sep="/"),
+                               full.names=TRUE), varname="tasmin")
+      
+      
+      
+      write_daily_flt_vpd(tmax=tmax, tmin=tmin, variable=variable,
                           outdir=outdir)
       
       
       
     } else if (variable == "vpd_09") {
       
-      #Get Tmin for 9am VPD
+      #Get Tmean for saturated VP
+      tmean <- brick(list.files(paste(awra_path, model, experiment, "r1i1p1", 
+                                     bc_method, "latest/day/tas/", sep="/"),
+                               full.names=TRUE), varname="tas")
+      
+      #Get Tmin for actual VP
       tmin <- brick(list.files(paste(awra_path, model, experiment, "r1i1p1", 
                                      bc_method, "latest/day/tasmin/", sep="/"),
                                full.names=TRUE), varname="tasmin")
       
-      write_daily_flt_vpd(tair=tmin, variable=variable,
+      
+      write_daily_flt_vpd(tmax=tmean, tmin=tmin, variable=variable,
                           outdir=outdir)
       
       
