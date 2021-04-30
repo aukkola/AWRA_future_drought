@@ -168,7 +168,7 @@ do
 
 
   #Change to CABLE directory and compile
-  cd $cable_src_path/trunk/offline
+  cd $cable_src_path'/trunk_31Mar2021/offline'
   
 
   #Set output files
@@ -187,7 +187,7 @@ do
 
 
   #Met input directory
-  met_indir=$out_path"/"${model}"/"${experiment}"/"${bc_method}"/"
+  met_indir=$wg_out_path"/"${model}"/"${experiment}"/"${bc_method}"/"
 
   #Create namelist
   sh ./create_cable-nml_co2.sh -y $year -l $logfile -o $outfile -i $restart_in -r $restart_out -c $co2 -m $met_indir
@@ -204,32 +204,34 @@ do
 
   echo "Step 4: Tidying up #-----------------------"
 
-  #Check that have same number of CABLE output files as
-  #forcing files
-  #no_years=`seq $startYr $endYr | wc -l`
-  #cable_outs=`ls $outs"/*.nc" | wc -l`
-
-  #If they don't match, stop without deleting forcing files
-
-  #if [ $no_years -ne $cable_outs ]; then 
-  #  echo "ERROR: The number of output files does not match the number of years"
-  #  exit 1
-  #fi
-
-  cable_outs=`ls $outs"/*${year}*.nc" | wc -l`
-  
-  if [ $cable_outs -ne 1 ]; then 
-    echo "ERROR: The number of output files does not match the number of years"
-    exit 1
-  fi
-
-
-  #Remove WG forcing files
-  rm -r $wg_out_path
-
 
 done
 
+
+#Check that have same number of CABLE output files as
+#forcing files
+no_years=`seq $startYr $endYr | wc -l`
+cable_outs=`ls $outs"/*.nc" | wc -l`
+
+#If they don't match, stop without deleting forcing files
+
+if [ $no_years -ne $cable_outs ]; then 
+  echo "ERROR: The number of output files does not match the number of years"
+  exit 1
+fi
+
+# cable_outs=`ls $outs"/*${year}*.nc" | wc -l`
+# 
+# if [ $cable_outs -ne 1 ]; then 
+#   echo "ERROR: The number of output files does not match the number of years"
+#   exit 1
+# fi
+# 
+
+
+
+#Remove WG forcing files
+rm -r $wg_out_path
 
 #Remove daily .flt files
 rm -r $wg_in_path
