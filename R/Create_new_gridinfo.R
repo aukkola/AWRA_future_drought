@@ -88,6 +88,12 @@ landsea[is.na(landsea)] <- 1
 
 patchdim <- ncdim_def("patch", units="-", vals=c(1:2))
 
+#Adding this as CABLE needs it but it gets removed by CDO when processing
+#Mengyuan's file. Normally used for Albedo but not in Mengyuan's file
+#(the albedo comes from Mark)
+raddim <- ncdim_def("rad", units="-", vals=c(1:3))
+
+
 
 #Define new variables
 
@@ -103,6 +109,10 @@ iveg_var <- ncvar_def("iveg", units="-", dim=list(nc$dim$longitude, nc$dim$latit
 landsea_var <- ncvar_def("landsea", units="-", dim=list(nc$dim$longitude,
                                                           nc$dim$latitude), prec="double")
 
+#Dummy variable to allow rad dimension to be added to file
+dummy_var <- ncvar_def("dummy", units="-", dim=raddim, prec="double")
+
+
 
 #Add new variables
 
@@ -110,6 +120,7 @@ nc <- ncvar_add(nc, lai_var)
 nc <- ncvar_add(nc, patchfrac_var)
 nc <- ncvar_add(nc, landsea_var)
 nc <- ncvar_add(nc, iveg_var)
+nc <- ncvar_add(nc, dummy_var)
 
 
 #Write values
@@ -117,6 +128,7 @@ ncvar_put(nc, varid=lai_var, vals=as.array(lai))#, start=c(1,1,1), count=c(1,1,1
 ncvar_put(nc, varid=patchfrac_var, vals=as.array(patchfrac))#, start=c(1,1,1), count=c(1,1,2))
 ncvar_put(nc, varid=iveg_var, vals=as.matrix(iveg))#, start=c(1,1), count=c(1,1))
 ncvar_put(nc, varid=landsea_var, vals=as.matrix(landsea))#, start=c(1,1), count=c(1,1))
+ncvar_put(nc, varid=dummy_var, vals=1:3)#, start=c(1,1), count=c(1,1))
 
 
 

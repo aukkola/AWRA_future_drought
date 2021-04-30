@@ -48,7 +48,8 @@ cable_src_path=$path"/CABLE_source/"
 
 
 #CABLE output path (where CABLE outputs will be stored)
-cable_out_path=$path"/CABLE_outputs/$model/$experiment/$bc_method"
+cable_out_path_CO2=$path"/CABLE_outputs/CO2/$model/$experiment/$bc_method"
+cable_out_path_noCO2=$path"/CABLE_outputs/noCO2/$model/$experiment/$bc_method"
 
 
 #Path to AWRA inputs (don't change)
@@ -73,20 +74,35 @@ cd $cable_src_path'/trunk_31Mar2021/offline'
 ./build_mpi.ksh
 
 
-#Create output folder
-mkdir -p $cable_out_path
+#Create output folders (separately for increasing and constant CO2)
+mkdir -p $cable_out_path_CO2
+mkdir -p $cable_out_path_noCO2
 
 
-#Create subdirectories
-outs=$cable_out_path"/outputs/"
-restarts=$cable_out_path"/restarts/"
-nml=$cable_out_path"/namelists/"
-logs=$cable_out_path"/logs/"
+### Create subdirectories ###
 
-mkdir $outs
-mkdir $restarts
-mkdir $nml
-mkdir $logs
+#CO2
+outs_CO2=$cable_out_path_CO2"/outputs/"
+restarts_CO2=$cable_out_path_CO2"/restarts/"
+nml_CO2=$cable_out_path_CO2"/namelists/"
+logs_CO2=$cable_out_path_CO2"/logs/"
+
+mkdir $outs_CO2
+mkdir $restarts_CO2
+mkdir $nml_CO2
+mkdir $logs_CO2
+
+#No CO2
+outs_noCO2=$cable_out_path_noCO2"/outputs/"
+restarts_noCO2=$cable_out_path_noCO2"/restarts/"
+nml_noCO2=$cable_out_path_noCO2"/namelists/"
+logs_noCO2=$cable_out_path_noCO2"/logs/"
+
+mkdir $outs_noCO2
+mkdir $restarts_noCO2
+mkdir $nml_noCO2
+mkdir $logs_noCO2
+
 
 
 #Set CO2 file
@@ -162,51 +178,74 @@ echo "Running WG"
 #Loop through years
 for year in $(seq $startYr $endYr)
 do
-  
 
   echo "Step 3: Running CABLE for $year #-----------------------"
-
-
-  #Change to CABLE directory and compile
-  cd $cable_src_path'/trunk_31Mar2021/offline'
-  
-
-  #Set output files
-  logfile=$logs"/cable_log_${year}.txt"
-  outfile=$outs"/cable_out_${year}.nc"
-  restart_in=$restarts"/restart_${prev_year}.nc"
-  restart_out=$restarts"/restart_${year}.nc"
-  namelist=$nml"/cable_${year}_${gw_tag}.nml"
-
-
-
-  #Need to pass PSurf file depending on whether leap year or not
-
-  #Get CO2 concentration for the year
-  co2=`echo "${co2_file[$year]}"`
-
 
   #Met input directory
   met_indir=$wg_out_path"/"${model}"/"${experiment}"/"${bc_method}"/"
 
+
+  #Change to CABLE directory and compile
+  cd $cable_src_path'/trunk_31Mar2021/offline'
+
+
+  ######################
+  ### Increasing CO2 ###
+  ######################
+
+  #Set output files
+  logfile=$logs_CO2"/cable_log_${year}.txt"
+  outfile=$outs_CO2"/cable_out_${year}.nc"
+  restart_in=$restarts_CO2"/restart_${prev_year}.nc"
+  restart_out=$restarts_CO2"/restart_${year}.nc"
+  namelist=$nml_CO2"/cable_${year}_${gw_tag}.nml"
+
+
+  #Get CO2 concentration for the year
+  co2=`echo "${co2_file[$year]}"`
+
   #Create namelist
   sh ./create_cable-nml_co2.sh -y $year -l $logfile -o $outfile -i $restart_in -r $restart_out -c $co2 -m $met_indir
-
 
   #Run CABLE
   mpirun -n 48 ./cable-mpi ./cable_on.nml
 
   
+  
+  ####################
+  ### Constant CO2 ###
+  ####################
 
-  ###############
-  ### Tidy up ###
-  ###############
+  #Run with CO2 set to 1960 level
 
-  echo "Step 4: Tidying up #-----------------------"
+  #Set output files
+  logfile=$logs_noCO2"/cable_log_${year}.txt"
+  outfile=$outs_noCO2"/cable_out_${year}.nc"
+  restart_in=$restarts_noCO2"/restart_${prev_year}.nc"
+  restart_out=$restarts_noCO2"/restart_${year}.nc"
+  namelist=$nml_noCO2"/cable_${year}_${gw_tag}.nml"
+
+
+  #Get CO2 concentration for 1960
+  co2=`echo "${co2_file[1960]}"`
+
+  #Create namelist
+  sh ./create_cable-nml_co2.sh -y $year -l $logfile -o $outfile -i $restart_in -r $restart_out -c $co2 -m $met_indir
+
+  #Run CABLE
+  mpirun -n 48 ./cable-mpi ./cable_on.nml
 
 
 done
 
+
+
+###############
+### Tidy up ###
+###############
+
+echo "Step 4: Tidying up #-----------------------"
+s
 
 #Check that have same number of CABLE output files as
 #forcing files
@@ -227,7 +266,6 @@ fi
 #   exit 1
 # fi
 # 
-
 
 
 #Remove WG forcing files
