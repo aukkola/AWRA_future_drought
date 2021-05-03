@@ -201,8 +201,8 @@ do
   namelist=$nml_CO2"/cable_${year}_${gw_tag}.nml"
 
 
-  #Get CO2 concentration for the year
-  co2=`echo "${co2_file[$year]}"`
+  #Get CO2 concentration for the year (second command removes a line ending character)
+  co2=`echo "${co2_file[$year]}" | tr '\r' ' ' `
 
   #Create namelist
   sh ./create_cable-nml_co2.sh -y $year -l $logfile -o $outfile -i $restart_in -r $restart_out -c $co2 -m $met_indir

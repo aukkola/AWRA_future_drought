@@ -5,9 +5,11 @@ library(raster)
 #clear R environment
 rm(list=ls(all=TRUE))
 
+path <- "/g/data/w35/amu561/Steven_CABLE_runs/CABLE_inputs/"
+
 
 #Mengyuan's AWAP gridinfo file with LAI, landsea, patchfrac and iveg removed
-gridinfo <- "/g/data/w35/amu561/Steven_CABLE_runs/CABLE_inputs/gridinfo_AWRA_matched_veg_inputs.nc"
+gridinfo <- paste0(path, "/gridinfo_AWRA_matched_veg_inputs.nc")
 
 
 nc <- nc_open(gridinfo, write=TRUE)
@@ -72,11 +74,17 @@ lai <- log(1-fcover)/(-weighted_k)
 ### Land-sea mask ###
 #####################
 
+#Mengyuan's file
+#landsea <- raster("g/data/w35/mm3972/model/cable/src/CABLE-AUX/offline/gridinfo_AWAP_OpenLandMap_ELEV_DLCM_mask.nc")
+
 landsea <- lai[[1]]
 landsea[!is.na(landsea)] <- 0
 landsea[is.na(landsea)] <- 1
 
+#Read isoil, it has lots of missing cells. Need to mask these as ocean
+isoil <- raster(gridinfo, varname="isoil")
 
+landsea[is.na(isoil)] <- 1
 
 
 ##########################
@@ -124,12 +132,14 @@ nc <- ncvar_add(nc, dummy_var)
 
 
 #Write values
-ncvar_put(nc, varid=lai_var, vals=as.array(lai))#, start=c(1,1,1), count=c(1,1,12))
-ncvar_put(nc, varid=patchfrac_var, vals=as.array(patchfrac))#, start=c(1,1,1), count=c(1,1,2))
-ncvar_put(nc, varid=iveg_var, vals=as.matrix(iveg))#, start=c(1,1), count=c(1,1))
-ncvar_put(nc, varid=landsea_var, vals=as.matrix(landsea))#, start=c(1,1), count=c(1,1))
-ncvar_put(nc, varid=dummy_var, vals=1:3)#, start=c(1,1), count=c(1,1))
 
+#Need to flip and transpose the matrices, otherwise rubbish written into the file. Need to used aperm
+#for array and t for matrix
+ncvar_put(nc, varid=lai_var, vals=aperm(as.array(flip(lai, direction='y')), c(2,1,3))) #as.array(lai)), 
+ncvar_put(nc, varid=patchfrac_var, vals=aperm(as.array(flip(patchfrac, direction='y')), c(2,1,3))) 
+ncvar_put(nc, varid=iveg_var, vals=aperm(as.array(flip(iveg, direction='y')), c(2,1,3))) 
+ncvar_put(nc, varid=landsea_var, vals=t(as.matrix(flip(landsea, direction='y'))))
+ncvar_put(nc, varid=dummy_var, vals=1:3)
 
 
 nc_close(nc)
@@ -138,7 +148,19 @@ nc_close(nc)
 
 
 
+par(mfcol=c(2,2))
 
+mask <- raster(gridinfo, varname="landsea")
+plot(mask, main="mask")
+
+lai <- raster(gridinfo, varname="LAI")
+plot(lai, main="LAI")
+
+iveg <- raster(gridinfo, varname="iveg")
+plot(iveg, main="iveg")
+
+patch <- raster(gridinfo, varname="patchfrac")
+plot(patch, main="patchfrac")
 
 
 
