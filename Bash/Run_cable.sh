@@ -235,6 +235,7 @@ do
   #Run CABLE
   mpirun -n 48 ./cable-mpi ./cable_on.nml
 
+  prev_year=$year
 
 done
 
