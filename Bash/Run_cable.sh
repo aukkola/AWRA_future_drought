@@ -42,6 +42,7 @@ path="/g/data/w35/$USER/Steven_CABLE_runs"
 
 #Scratch path (where temp files will be stored)
 scratch_path="/scratch/w35/$user/Steven_CABLE_runs" 
+mkdir -p $scratch_path
 
 #Paths to weather generator and CABLE code
 #(load weather generator and CABLE codes to these locations)
