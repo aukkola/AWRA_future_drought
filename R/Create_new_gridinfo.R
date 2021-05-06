@@ -87,6 +87,7 @@ isoil <- raster(gridinfo, varname="isoil")
 landsea[is.na(isoil)] <- 1
 
 
+
 ##########################
 ### Write new gridinfo ###
 ##########################

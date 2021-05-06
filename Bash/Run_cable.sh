@@ -26,20 +26,22 @@ module load R
 ### Settings ###
 ################
 
-user="amu561"
+#CHANGE model, experiment and bc method options here
 
 model="CNRM-CERFACS-CNRM-CM5"
 experiment="historical"   #one of historical, rcp45, rcp85
 bc_method="CSIRO-CCAM-r3355-r240x120-ISIMIP2b-AWAP"
 
+#Set base path
+path="/g/data/w35/$USER/Steven_CABLE_runs"
 
-#Path to scripts (load scripts to this location)
-path="/g/data/w35/$user/Steven_CABLE_runs"
 
+
+
+#---- Don't need to change past this if using my file structure
 
 #Scratch path (where temp files will be stored)
 scratch_path="/scratch/w35/$user/Steven_CABLE_runs" 
-
 
 #Paths to weather generator and CABLE code
 #(load weather generator and CABLE codes to these locations)
@@ -54,6 +56,10 @@ cable_out_path_noCO2=$path"/CABLE_outputs/noCO2/$model/$experiment/$bc_method"
 
 #Path to AWRA inputs (don't change)
 awra_path="/g/data/wj02/COMPLIANT/HMINPUT/output/AUS-5/BoM/"
+
+
+
+#Create directories
 
 
 
@@ -227,7 +233,7 @@ do
 
 
   #Get CO2 concentration for 1960
-  co2=`echo "${co2_file[1960]}"`
+  co2=`echo "${co2_file[1960]}" | tr '\r' ' ' `
 
   #Create namelist
   sh ./create_cable-nml_co2.sh -y $year -l $logfile -o $outfile -i $restart_in -r $restart_out -c $co2 -m $met_indir
