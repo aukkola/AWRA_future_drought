@@ -60,6 +60,12 @@ weighted_k <- calc(patchfrac, function(x) weighted.mean(c(0.4, 0.7), w=x))
 
 lai <- log(1-fcover)/(-weighted_k)
 
+#LAI must be greater than 0.01 or CABLE will go bonkers
+#(this threshold is hard-coded into cable_albedo, elsewhere
+#is it set by LAI_THRESH which is set to 0.001)
+lai[lai <= 0.01] <- 0.011
+
+
 # lai_shallow <- log(1-fcover)/(-0.4)
 # 
 # lai_deep <- log(1-fcover)/(-0.7)
@@ -147,23 +153,23 @@ nc_close(nc)
 
 
 
-
-
-par(mfcol=c(2,2))
-
-mask <- raster(gridinfo, varname="landsea")
-plot(mask, main="mask")
-
-lai <- raster(gridinfo, varname="LAI")
-plot(lai, main="LAI")
-
-iveg <- raster(gridinfo, varname="iveg")
-plot(iveg, main="iveg")
-
-patch <- raster(gridinfo, varname="patchfrac")
-plot(patch, main="patchfrac")
-
-
+# 
+# 
+# par(mfcol=c(2,2))
+# 
+# mask <- raster(gridinfo, varname="landsea")
+# plot(mask, main="mask")
+# 
+# lai <- raster(gridinfo, varname="LAI")
+# plot(lai, main="LAI")
+# 
+# iveg <- raster(gridinfo, varname="iveg")
+# plot(iveg, main="iveg")
+# 
+# patch <- raster(gridinfo, varname="patchfrac")
+# plot(patch, main="patchfrac")
+# 
+# 
 
 
 

@@ -13,8 +13,14 @@ cdo delname,LAI,landsea,patchfrac,iveg $gridinfo $new_file
 #Out-of-bounds swilt values, fix
 ncap2 -s 'where(swilt < 0.05) swilt=0.05' -O $new_file $new_file
 
+#Out-of-bounds swilt values, fix
+ncap2 -s 'where(swilt_vec < 0.05) swilt_vec=0.05' -O $new_file $new_file
+
 #A few whacky elevation values (on the coast), cap to sea level
 ncap2 -s 'where(elevation > 3000) elevation=0' -O $new_file $new_file
+
+
+
 
 
 
