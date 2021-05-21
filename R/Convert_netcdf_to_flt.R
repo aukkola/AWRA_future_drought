@@ -61,7 +61,7 @@ source(paste0(path, "/scripts/R/functions/Calculate_VPD.R"))
 
 
 #Initialise cores
-cl <- makeCluster(getOption('cl.cores', 8))
+cl <- makeCluster(getOption('cl.cores', 6))
 
 
 

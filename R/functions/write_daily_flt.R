@@ -13,13 +13,20 @@ write_daily_flt <- function(data, variable, outdir) {
     
     #Following Mengyuan's naming convention
     outfile <- paste0(outdir, "/", variable, "_", day_stamp, "_",
-                      day_stamp, ".flt")
+                      day_stamp)
     
     #Add this to avoid duplicate processing
     if (file.exists(outfile)) next
     
     #Write output
-    writeRaster(data[[n]], outfile, overwrite=TRUE)
+    writeRaster(data[[n]], paste0(outfile, ".flt"), overwrite=TRUE)
+    
+    
+    #Remove extra files, not needed by weather generator
+    unlink(paste0(outfile, ".flt.aux.xml"))
+    unlink(paste0(outfile, ".hdr"))
+    unlink(paste0(outfile, ".prj"))
+    
     
   }
   
@@ -62,10 +69,17 @@ write_daily_flt_lwdown <- function(tmean, tmin, swdown, variable, outdir) {
     
     #Following Mengyuan's naming convention
     outfile <- paste0(outdir, "/", variable, "_", day_stamp, "_",
-                      day_stamp, ".flt")
+                      day_stamp)
     
     #Write output
-    writeRaster(lwdown, outfile, overwrite=TRUE)
+    writeRaster(lwdown, paste0(outfile, ".flt"), overwrite=TRUE)
+    
+    
+    #Remove extra files, not needed by weather generator
+    unlink(paste0(outfile, ".flt.aux.xml"))
+    unlink(paste0(outfile, ".hdr"))
+    unlink(paste0(outfile, ".prj"))
+    
     
   }
   
@@ -102,11 +116,16 @@ write_daily_flt_vpd <- function(tmax, tmin, variable, outdir) {
     
     #Following Mengyuan's naming convention
     outfile <- paste0(outdir, "/", variable, "_", day_stamp, "_",
-                      day_stamp, ".flt")
+                      day_stamp)
     
     #Write output
-    writeRaster(vpd, outfile, overwrite=TRUE)
+    writeRaster(vpd, paste0(outfile, ".flt"), overwrite=TRUE)
     
+    
+    #Remove extra files, not needed by weather generator
+    unlink(paste0(outfile, ".flt.aux.xml"))
+    unlink(paste0(outfile, ".hdr"))
+    unlink(paste0(outfile, ".prj"))
     
   }
   
