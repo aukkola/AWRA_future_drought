@@ -3,7 +3,7 @@
 #PBS -m ae
 #PBS -P oq98
 #PBS -q normal
-#PBS -l walltime=25:00:00
+#PBS -l walltime=8:00:00
 #PBS -l mem=60GB
 #PBS -l jobfs=3Gb
 #PBS -l ncpus=48
@@ -12,6 +12,9 @@
 #PBS -l storage=gdata/w35+gdata/wd9+scratch/w35+gdata/wj02
 #PBS -M a.ukkola@unsw.edu.au
 
+module unload openmpi
+module add intel-mpi/2019.5.281
+module add netcdf/4.7.4p
 
 
 ### Step 3 wall time ###
@@ -32,22 +35,10 @@
 ### Settings ###
 ################
 
-#From command line
-path=$1
-wg_out_path=$2
-model=$3
-experiment=$4
-bc_method=$5
-startYr=$6 
-endYr=$7 
-cable_src_path=$8 
-cable_src_path=$9
-
-
 
 #CABLE output path (where CABLE outputs will be stored)
-cable_out_path_CO2=$path"/CABLE_outputs/CO2/$model/$experiment/$bc_method"
-cable_out_path_noCO2=$path"/CABLE_outputs/noCO2/$model/$experiment/$bc_method"
+cable_out_path_CO2=$path"/CABLE_outputs/CO2/"$model/$experiment/$bc_method
+cable_out_path_noCO2=$path"/CABLE_outputs/noCO2/"$model/$experiment/$bc_method
 
 
 

@@ -9,7 +9,7 @@
 #PBS -l ncpus=1
 #PBS -j oe
 #PBS -l wd
-#PBS -l storage=gdata/w35+gdata/wd9+scratch/w35+gdata/wj02
+#PBS -l storage=gdata/w35+scratch/w35
 #PBS -M a.ukkola@unsw.edu.au
 
 
@@ -37,15 +37,6 @@ module load R
 ################
 ### Settings ###
 ################
-
-#From command line
-# path=$1
-# scratch_path=$2
-# model=$3
-# experiment=$4
-# bc_method=$5 
-# cable_src_path=$6
-
 
 #Set start and end years
 if [[ $experiment == "historical" ]]; then 
@@ -83,11 +74,12 @@ echo "Running WG"
 ./awap_to_netcdf $model $experiment $bc_method $wg_in_path $wg_out_path
 
 
-
 #Check that produces the correct number of files
 #were produced by weather generator
+check_path=$wg_out_path"/"${model}"/"${experiment}"/"${bc_method}"/Rainf"
+
 no_years=`seq $startYr $endYr | wc -l`
-wg_outs=`ls $wg_out_path"/Rainf/*.nc" | wc -l`
+wg_outs=`ls $check_path/*.nc | wc -l`
 
 #If they don't match, stop without deleting forcing files
 
