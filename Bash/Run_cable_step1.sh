@@ -9,7 +9,7 @@
 #PBS -l ncpus=6
 #PBS -j oe
 #PBS -l wd
-#PBS -l storage=gdata/w35+gdata/wd9+scratch/w35+gdata/wj02
+#PBS -l storage=gdata/w97+gdata/wd9+scratch/w97+gdata/wj02
 #PBS -M a.ukkola@unsw.edu.au
 
 
@@ -48,12 +48,12 @@ module load R
 
 #CHANGE model, experiment and bc method options here
 
-model="CNRM-CERFACS-CNRM-CM5"
-experiment="historical"   #one of historical, rcp45, rcp85
-bc_method="CSIRO-CCAM-r3355-r240x120-ISIMIP2b-AWAP"
+model="CNRM-CERFACS-CNRM-CM5" #CNRM-CERFACS-CNRM-CM5,  CSIRO-BOM-ACCESS1-0, MIROC-MIROC5, NOAA-GFDL-GFDL-ESM2M
+experiment="historical"   #historical, rcp45, rcp85
+bc_method="r240x120-MRNBC-AWAP"
 
 #Set base path
-path="/g/data/w35/$USER/Steven_CABLE_runs"
+path="/g/data/w97/$USER/Steven_CABLE_runs"
 
 
 
@@ -61,7 +61,7 @@ path="/g/data/w35/$USER/Steven_CABLE_runs"
 #---- Don't need to change past this if using my file structure
 
 #Scratch path (where temp files will be stored)
-scratch_path="/scratch/w35/$USER/Steven_CABLE_runs" 
+scratch_path="/scratch/w97/$USER/Steven_CABLE_runs" 
 mkdir -p $scratch_path
 
 #Paths to weather generator and CABLE code
@@ -75,7 +75,8 @@ awra_path="/g/data/wj02/COMPLIANT/HMINPUT/output/AUS-5/BoM/"
 
 
 
-#Create directories
+#Grab path where run script is
+rundir=`pwd`
 
 
 
@@ -122,7 +123,14 @@ echo "Finished creating inputs for weather generator #-----------------------"
 
 echo "Submitting weather generator job #-----------------------"
 
-cd $path"/scripts/Bash/"
+#cd $path"/scripts/Bash/"
+#cd to run directory to submit next script
+cd $rundir
+
+#copy executable and namelist here
+cp $cable_src_path/trunk_31Mar2021/offline/cable-mpi .
+cp $cable_src_path/trunk_31Mar2021/offline/create_cable-nml_co2.sh .
+
 
 
 qsub -v "path=${path}","scratch_path=${scratch_path}","model=${model}","wg_path=${wg_path}",\

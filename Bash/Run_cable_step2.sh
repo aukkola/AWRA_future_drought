@@ -3,13 +3,13 @@
 #PBS -m ae
 #PBS -P oq98
 #PBS -q normal
-#PBS -l walltime=10:00:00
+#PBS -l walltime=15:00:00
 #PBS -l mem=30GB
 #PBS -l jobfs=1Gb
 #PBS -l ncpus=1
 #PBS -j oe
 #PBS -l wd
-#PBS -l storage=gdata/w35+scratch/w35
+#PBS -l storage=gdata/w97+scratch/w97
 #PBS -M a.ukkola@unsw.edu.au
 
 
@@ -24,10 +24,10 @@ module load R
 ### Step 2 wall time ###
 
 #historical run: 
-#walltime=10:00:00
+#walltime=15:00:00
 
 #future run:
-#walltime=20:30:00
+#walltime=40:00:00
 
 
 #(12 min per year)
@@ -49,6 +49,8 @@ elif [[ $experiment == "rcp45" || $experiment == "rcp85" ]]; then
 
 fi
 
+#Grab path where run script is
+rundir=`pwd`
 
 
 #############################
@@ -90,7 +92,7 @@ fi
 
 
 #Remove daily .flt files
-rm -r $wg_in_path
+rm -r $wg_in_path"/"${model}"/"${experiment}"/"${bc_method}
 
 
 echo "Step 2: Finished running weather generator #-----------------------"
@@ -103,11 +105,11 @@ echo "Step 2: Finished running weather generator #-----------------------"
 
 echo "Submitting CABLE run job #-----------------------"
 
-cd $path"/scripts/Bash/"
+cd $rundir
 
 
 qsub -v "path=$path","wg_out_path=$wg_out_path","model=$model","experiment=$experiment",\ 
-"bc_method=$bc_method","startYr=$startYr","endYr=$endYr","cable_src_path=$cable_src_path" \
+"bc_method=$bc_method","startYr=$startYr","endYr=$endYr","year=$startYr","cable_src_path=$cable_src_path" \
 Run_cable_step3.sh 
 
 

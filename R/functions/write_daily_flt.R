@@ -9,6 +9,12 @@ write_daily_flt <- function(data, variable, outdir) {
   #Write daily flt files
   for (n in 1:nlayers(data)) {
     
+    #Skip years between 2006-2053 as only running CABLE for 2054-2099
+    yr <- as.numeric(format(dates[n], format="%Y"))
+    
+    if (yr >2005 & yr < 2054) next
+    
+    
     day_stamp <- format(dates[n], format="%Y%m%d")
     
     #Following Mengyuan's naming convention
@@ -50,6 +56,12 @@ write_daily_flt_lwdown <- function(tmean, tmin, swdown, variable, outdir) {
   #Write daily flt files
   for (n in 1:length(dates)) {
     
+    #Skip years between 2006-2053 as only running CABLE for 2054-2099
+    yr <- as.numeric(format(dates[n], format="%Y"))
+    
+    if (yr >2005 & yr < 2054) next
+    
+    
     
     ### Calculate LWdown for the day ###
     
@@ -70,6 +82,9 @@ write_daily_flt_lwdown <- function(tmean, tmin, swdown, variable, outdir) {
     #Following Mengyuan's naming convention
     outfile <- paste0(outdir, "/", variable, "_", day_stamp, "_",
                       day_stamp)
+    
+    #Add this to avoid duplicate processing
+    if (file.exists(outfile)) next
     
     #Write output
     writeRaster(lwdown, paste0(outfile, ".flt"), overwrite=TRUE)
@@ -100,6 +115,12 @@ write_daily_flt_vpd <- function(tmax, tmin, variable, outdir) {
   for (n in 1:length(dates)) {
     
     
+    #Skip years between 2006-2053 as only running CABLE for 2054-2099
+    yr <- as.numeric(format(dates[n], format="%Y"))
+    
+    if (yr >2005 & yr < 2054) next
+    
+    
     ### Calculate VPD for the day ###
     
     #Stack inputs for calc function
@@ -117,6 +138,9 @@ write_daily_flt_vpd <- function(tmax, tmin, variable, outdir) {
     #Following Mengyuan's naming convention
     outfile <- paste0(outdir, "/", variable, "_", day_stamp, "_",
                       day_stamp)
+    
+    #Add this to avoid duplicate processing
+    if (file.exists(outfile)) next
     
     #Write output
     writeRaster(vpd, paste0(outfile, ".flt"), overwrite=TRUE)
