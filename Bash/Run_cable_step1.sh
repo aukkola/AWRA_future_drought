@@ -94,7 +94,10 @@ echo "Compiling"
 #Change to CABLE directory and compile
 cd $cable_src_path'/trunk_31Mar2021/offline'
 
-./build_mpi.ksh
+#COMMENTING OUT because this makes files oq98-owned and Gadi doesn't like it
+#leads to weird disk quota errors etc. Need to make sure executable built
+#before running the model...
+#./build_mpi.ksh
 
 
 
@@ -135,5 +138,7 @@ cp $cable_src_path/trunk_31Mar2021/offline/create_cable-nml_co2.sh .
 
 qsub -v "path=${path}","scratch_path=${scratch_path}","model=${model}","wg_path=${wg_path}",\
 "experiment=${experiment}","bc_method=${bc_method}","cable_src_path=${cable_src_path}" Run_cable_step2.sh 
+
+
 
 

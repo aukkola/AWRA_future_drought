@@ -5,7 +5,7 @@ library(raster)
 #clear R environment
 rm(list=ls(all=TRUE))
 
-path <- "/g/data/w35/amu561/Steven_CABLE_runs/CABLE_inputs/"
+path <- "/g/data/w97/amu561/Steven_CABLE_runs/CABLE_inputs/"
 
 
 #Mengyuan's AWAP gridinfo file with LAI, landsea, patchfrac and iveg removed
@@ -20,7 +20,7 @@ nc <- nc_open(gridinfo, write=TRUE)
 ### AWRA land cover ###
 #######################
 
-tree_frac <- raster(paste0("/g/data/w35/amu561/Steven_CABLE_runs/AWRA_fields/",
+tree_frac <- raster(paste0("/g/data/w97/amu561/Steven_CABLE_runs/AWRA_fields/",
                           "AWRA_tree_fraction.nc"))
 
 grass_frac <- 1 - tree_frac
@@ -46,7 +46,7 @@ patchfrac <- brick(list(tree_frac, grass_frac))
 ################
 
 #AWRA fractional vegetation cover
-fcover <- brick(paste0("/g/data/w35/amu561/Steven_CABLE_runs/AWRA_fields/",
+fcover <- brick(paste0("/g/data/w97/amu561/Steven_CABLE_runs/AWRA_fields/",
                        "AWRA_fractional_vegetation_cover_monthly_climatology_1960_2005.nc"))
 
 #Convert to LAI
@@ -113,16 +113,16 @@ raddim <- ncdim_def("rad", units="-", vals=c(1:3))
 #Define new variables
 
 lai_var <- ncvar_def("LAI", units="-", dim=list(nc$dim$longitude,
-                                                nc$dim$latitude, nc$dim$time), prec="double")
+                                                nc$dim$latitude, nc$dim$time), prec="float")
 
 patchfrac_var <- ncvar_def("patchfrac", units="-", dim=list(nc$dim$longitude, nc$dim$latitude, 
-                                                            patchdim), prec="double")
+                                                            patchdim), prec="float")
 
 iveg_var <- ncvar_def("iveg", units="-", dim=list(nc$dim$longitude, nc$dim$latitude, 
-                                                  patchdim), prec="double")
+                                                  patchdim), prec="integer")
 
 landsea_var <- ncvar_def("landsea", units="-", dim=list(nc$dim$longitude,
-                                                          nc$dim$latitude), prec="double")
+                                                          nc$dim$latitude), prec="integer")
 
 #Dummy variable to allow rad dimension to be added to file
 dummy_var <- ncvar_def("dummy", units="-", dim=raddim, prec="double")

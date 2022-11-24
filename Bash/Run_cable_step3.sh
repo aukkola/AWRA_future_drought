@@ -13,8 +13,9 @@
 #PBS -M a.ukkola@unsw.edu.au
 
 module unload openmpi
+module unload netcdf
 module add intel-mpi/2019.5.281
-module add netcdf/4.7.4p
+module add netcdf/4.6.3
 
 
 ### Step 3 wall time ###
@@ -115,14 +116,14 @@ do
   #If restart doesn't exist
   if [ ! -f $restart_in ]
   then
-    if [ $experiment == "historical" -a $year -eq $((StartYr)) ]
+    if [ $experiment == "historical" -a $year -eq $((startYr)) ]
     then
       echo "restart doesn't exist, first year of historical experiment"
     else
       echo "ERROR: restart_in does not exist"
       exit 1
+    fi
   fi
-
 
   #Get CO2 concentration for the year (second command removes a line ending character)
   co2=`echo "${co2_file[$year]}" | tr '\r' ' ' `
@@ -143,7 +144,7 @@ done
 
 #Then submit next 5 years
 
-qsub -v "path=$path","wg_out_path=$wg_out_path","model=$model","experiment=$experiment",\ 
+qsub -v "path=$path","wg_out_path=$wg_out_path","model=$model","experiment=$experiment",\
 "bc_method=$bc_method","startYr=$startYr","endYr=$endYr","year=$year","cable_src_path=$cable_src_path" \
 Run_cable_step3.sh 
 

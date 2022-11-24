@@ -17,8 +17,6 @@ module unload netcdf
 module unload openmpi
 module add intel-mpi/2019.5.281
 module add netcdf/4.6.3
-module load gdal
-module load R
 
 
 ### Step 2 wall time ###
@@ -108,9 +106,9 @@ echo "Submitting CABLE run job #-----------------------"
 cd $rundir
 
 
-qsub -v "path=$path","wg_out_path=$wg_out_path","model=$model","experiment=$experiment",\ 
-"bc_method=$bc_method","startYr=$startYr","endYr=$endYr","year=$startYr","cable_src_path=$cable_src_path" \
-Run_cable_step3.sh 
+qsub -v "path=$path","wg_out_path=$wg_out_path","model=$model","experiment=$experiment",\
+"bc_method=$bc_method","startYr=$startYr","endYr=$endYr","year=$startYr",\
+"cable_src_path=$cable_src_path" Run_cable_step3.sh 
 
 
 
