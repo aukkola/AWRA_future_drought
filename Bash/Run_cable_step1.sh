@@ -69,6 +69,7 @@ mkdir -p $scratch_path
 wg_path=$path"/AWAP_to_netcdf/"
 cable_src_path=$path"/CABLE_source/"
 
+branch="trunk"
 
 #Path to AWRA inputs (don't change)
 awra_path="/g/data/wj02/COMPLIANT/HMINPUT/output/AUS-5/BoM/"
@@ -84,15 +85,15 @@ rundir=`pwd`
 ### Compile weather generator and CABLE ### 
 ###########################################
 
-cd $wg_path
+#cd $wg_path
 
 #Compile code
-echo "Compiling"
-./wrapper.sh
+#echo "Compiling"
+#./wrapper.sh
 
 
 #Change to CABLE directory and compile
-cd $cable_src_path'/trunk_31Mar2021/offline'
+#cd $cable_src_path'/'$branch'/offline'
 
 #COMMENTING OUT because this makes files oq98-owned and Gadi doesn't like it
 #leads to weird disk quota errors etc. Need to make sure executable built
@@ -131,8 +132,8 @@ echo "Submitting weather generator job #-----------------------"
 cd $rundir
 
 #copy executable and namelist here
-cp $cable_src_path/trunk_31Mar2021/offline/cable-mpi .
-cp $cable_src_path/trunk_31Mar2021/offline/create_cable-nml_co2.sh .
+cp $cable_src_path'/'$branch'/offline/cable-mpi' .
+cp $cable_src_path'/'$branch'/offline/create_cable-nml_co2.sh' .
 
 
 

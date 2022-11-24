@@ -34,33 +34,70 @@ bc_methods <- list.files(paste0(path, "/drought_metrics/", scale, "-month/"))
 duration <- list()
 intensity <- list()
 
+#Output path
+out_path <- paste0(path, "/Mean_drought_metrics/")
+
+
 
 #RCPs
 for (r in 1:length(rcps)) {
   
   #Initialise
-  duration[[r]] <- list()
-  intensity[[r]] <- list()
+  #duration[[r]] <- list()
+  #intensity[[r]] <- list()
   
+
   
-  #BC methods
-  for (b in 1:length(bc_methods)) {
+  #Variables
+  for (v in 1:length(variables)) {
     
-    #Get GCMs
-    gcms <- list.files(paste0(path, "/drought_metrics/", scale, "-month/", bc_methods[b]))
+    #Output path
+    out_path_duration <- paste(out_path, rcps[r], variables[v], "duration", sep="/")
+    dir.create(out_path_duration, recursive=TRUE)
+    
+    out_path_intensity <- paste(out_path, rcps[r], variables[v], "intensity", sep="/")
+    dir.create(out_path_intensity, recursive=TRUE)
+    
+    #Save name
+    #exp_name <- vector()
     
     
-    #GCMs
-    for (g in 1:length(gcms)) {
+    #BC methods
+    for (b in 1:length(bc_methods)) {
       
-      #Variables
-      for (v in 1:length(variables)) {
+      #Get GCMs
+      gcms <- list.files(paste0(path, "/drought_metrics/", scale, "-month/", bc_methods[b]))
+      
+      
+      #GCMs
+      for (g in 1:length(gcms)) {
         
-        #Initialise
-        if (b==1 & g==1) {
-          duration[[r]][[v]]  <- brick()
-          intensity[[r]][[v]] <- brick()
-        }
+        
+        # #Initialise
+        # if (b==1 & g==1) {
+        #   duration[[r]][[v]]  <- brick()
+        #   intensity[[r]][[v]] <- brick()
+        # }
+        # 
+      
+        ### Output file names ###
+        
+        #Output file names
+        out_file_duration <- paste0(out_path_duration, "/AWRA_future_difference_in_duration_scale_", 
+                                    scale, "_", hist_yrs[1], "-", hist_yrs[2], "_vs_", fut_yrs[1],
+                                    "-", fut_yrs[2], "_", variables[v], "_", rcps[r], "_",
+                                    bc_methods[b], "_", gcms[g], ".nc")
+        
+        out_file_intensity <- paste0(out_path_intensity, "/AWRA_future_difference_in_intensity_scale_", 
+                                     scale, "_", hist_yrs[1], "-", hist_yrs[2], "_vs_", fut_yrs[1],
+                                     "-", fut_yrs[2], "_", variables[v], "_", rcps[r], "_",
+                                     bc_methods[b], "_", gcms[g], ".nc")
+        
+        
+        #If these exist already, skip to speed up code
+        
+        if (file.exists(out_file_duration) & file.exists(out_file_intensity)) next
+        
         
         
         ################
@@ -73,6 +110,14 @@ for (r in 1:length(rcps)) {
                                 pattern=paste(variables[v], rcps[r], scale, sep="_"),
                                 full.names=TRUE)
         
+        #A few files missing currently, skip if not found
+        if(length(data_file) ==0 ) {
+          print(paste0("couldn't find a file, r:", r, ", b:", b, ", g:", g,
+                       ", v:", v))
+          next
+        }
+        
+        
         #Get metrics data
         temp_duration  <- brick(data_file, varname="duration")
         temp_intensity <- brick(data_file, varname="intensity")
@@ -81,8 +126,13 @@ for (r in 1:length(rcps)) {
         #Check that both data have the correct number of layers
         if (nlayers(temp_duration) != (length(all_years)*12) |
             nlayers(temp_intensity) != (length(all_years)*12)) {
-          stop("something funny going on")
+          stop(paste0("something funny going on, r:" 
+                      , r, ", b:", b, ", g:", g,", v:", v))
         }
+        
+        
+        #Save name
+        #exp_name <- append(exp_name, paste0(bc_methods[b], "_", gcms[g]))
         
         
         #Calculate historical and future mean
@@ -104,37 +154,58 @@ for (r in 1:length(rcps)) {
         diff_duration  <- fut_duration - hist_duration
         diff_intensity <- fut_intensity - hist_intensity
         
-
-        #Save to list
-        duration[[r]][[v]]  <- addLayer(duration[[r]][[v]], diff_duration)
-        intensity[[r]][[v]] <- addLayer(intensity[[r]][[v]], diff_intensity)
-        
-        
-      } #variables
       
-    } #GCMs
+        
+        #Write netcdf
+        writeRaster(diff_duration, out_file_duration, varname="duration", overwrite=TRUE)
+        writeRaster(diff_intensity, out_file_intensity, varname="intensity", overwrite=TRUE)
+        
+        
+        #Save to list
+        #duration[[r]][[v]]  <- addLayer(duration[[r]][[v]], diff_duration)
+        #intensity[[r]][[v]] <- addLayer(intensity[[r]][[v]], diff_intensity)
+        
+        
+      
+      } #GCMs
     
-  } #BC
+    } #BC
+  
+    #names(duration[[r]][[v]]) <- exp_name
+    #names(intensity[[r]][[v]]) <- exp_name
+    
+    
+  } #variables
+
+  #names(duration[[r]])  <- variables
+  #names(intensity[[r]]) <- variables
   
 } #RCPs
 
 
+#names(duration)  <- rcps
+#names(intensity) <- rcps
+
+
+
 #Save RDS files so don't need to run this processing again to plot
 
-out_path <- paste0(path, "/Mean_drought_metrics")
-
-dir.create(out_path)
-
-#Duration
-saveRDS(duration, paste0(out_path, "/AWRA_future_difference_in_duration_scale_", scale,
-                         "_", hist_yrs[1], "-", hist_yrs[2], "_vs_", fut_yrs[1],
-                         "-", fut_yrs[2], "_all_variables_and_RCPs.nc"))
-
-#Duration
-saveRDS(intensity, paste0(out_path, "/AWRA_future_difference_in_intensity_scale_", scale,
-                          "_", hist_yrs[1], "-", hist_yrs[2], "_vs_", fut_yrs[1],
-                          "-", fut_yrs[2], "_all_variables_and_RCPs.nc"))
-
+# out_path <- paste0(path, "/Mean_drought_metrics")
+# 
+# dir.create(out_path)
+# 
+# 
+# 
+# #Duration
+# saveRDS(duration, paste0(out_path, "/AWRA_future_difference_in_duration_scale_", scale,
+#                          "_", hist_yrs[1], "-", hist_yrs[2], "_vs_", fut_yrs[1],
+#                          "-", fut_yrs[2], "_all_variables_and_RCPs.nc"))
+# 
+# #Duration
+# saveRDS(intensity, paste0(out_path, "/AWRA_future_difference_in_intensity_scale_", scale,
+#                           "_", hist_yrs[1], "-", hist_yrs[2], "_vs_", fut_yrs[1],
+#                           "-", fut_yrs[2], "_all_variables_and_RCPs.nc"))
+# 
 
 
 
