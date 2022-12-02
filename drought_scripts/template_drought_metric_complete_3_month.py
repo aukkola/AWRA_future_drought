@@ -17,11 +17,14 @@ import xarray as xr
 ### Set paths ###
 #################
 
-lib_path  = "/g/data/w97/amu561/Steven_CABLE_runs/drought_scripts/functions"
+lib_path  = "/g/data/w97/amu561/Steven_CABLE_runs/scripts/drought_scripts/functions"
 
 ##### ALTERTED #####
 data_path = "/g/data/wj02/COMPLIANT"
 #data_path = "/g/data/wj02/AWRA_OUTPUT"
+
+scratch_path = '/scratch/w97/amu561/'
+
 
 # Add lib_path to os directory
 sys.path.append(os.path.abspath(lib_path))
@@ -100,16 +103,29 @@ if variable in output_variable and bias_corr in compliant:
 
 ### Get historical and future simulations ###
 
+#historical
 if bias_corr=="CCAM":
-    files_1_string=f'{data_path_var}/{awra_add}{model}/historical/r1i1p1/{ccam_add}r240x120-ISIMIP2b-AWAP/latest/day/{variable}/*.nc'
+    files_1_string=str(data_path_var + '/' + awra_add + model + '/historical/r1i1p1/' +
+                       ccam_add + 'r240x120-ISIMIP2b-AWAP/latest/day/' +
+                       variable+ '/*1960*.nc')
 else:
-    files_1_string=f'{data_path_var}/{awra_add}{model}/historical/r1i1p1/{ccam_add}r240x120-{bias_corr}-AWAP/latest/day/{variable}/*.nc'
+    files_1_string=str(data_path_var + '/' + awra_add + model +'/historical/r1i1p1/' +
+                       ccam_add + 'r240x120-' + bias_corr + '-AWAP/latest/day/' +
+                       variable + '/*1960*.nc')
+
+#Files to merge                    
 files_to_merge1=glob.glob(files_1_string)
 
+#Future
 if bias_corr=="CCAM":
- files_2_string=f'{data_path_var}/{awra_add}{model}/{scenario}/r1i1p1/{ccam_add}r240x120-ISIMIP2b-AWAP/latest/day/{variable}/*.nc'
+    files_2_string=str(data_path_var + '/' + awra_add + model + '/' + scenario + 
+                    '/r1i1p1/' + ccam_add + 'r240x120-ISIMIP2b-AWAP/' + 
+                    'latest/day/' + variable + '/*2006*.nc')
 else:
-    files_2_string=f'{data_path_var}/{awra_add}{model}/{scenario}/r1i1p1/{ccam_add}r240x120-{bias_corr}-AWAP/latest/day/{variable}/*.nc'
+    files_2_string=str(data_path_var + '/' + awra_add + model + '/' + scenario + 
+                       '/r1i1p1/' + ccam_add + 'r240x120-' + bias_corr + 
+                       '-AWAP/latest/day/' + variable + '/*2006*.nc')
+
 files_to_merge2=glob.glob(files_2_string)
 
 files_to_merge1.extend(files_to_merge2)
@@ -119,8 +135,11 @@ files_to_merge1.extend(files_to_merge2)
 temp_dir_path = f"/scratch/w97/amu561/temp/{bias_corr}{model}{scenario}{variable}{str(scale)}"
 os.system("mkdir -p " + temp_dir_path)
 
+os.system("mkdir -p " + scratch_path + "/monthly_sums/")
+
+
 ### Location of output file ###
-files= str("/scratch/w97/amu561/monthly_sums/" + bias_corr + "_" + 
+files= str(scratch_path + "/monthly_sums/" + bias_corr + "_" + 
            model + "_" + scenario + "_" + variable + ".nc")
 
 
@@ -138,8 +157,8 @@ if not os.path.isfile(files):
               variable + "_" + str(file_ms) + ".nc")
 
     ### Merge the monthly sum data ###
-    os.system("cdo mergetime " + temp_dir_path + "/" + variable + "*.nc /scratch/w97/amu561/monthly_sums/"+
-          bias_corr + "_" + model + "_" + scenario + "_" + variable + ".nc")
+    os.system("cdo mergetime " + temp_dir_path + "/" + variable + "*.nc " + scratch_path 
+              + "/monthly_sums/"+ bias_corr + "_" + model + "_" + scenario + "_" + variable + ".nc")
 
 
 
@@ -149,7 +168,7 @@ if not os.path.isfile(files):
 if variable=="s0":
 
     ### Location of output file ###
-    xtr_files = str("/scratch/w97/amu561/monthly_sums/" + bias_corr + "_" + model + "_" + 
+    xtr_files = str(scratch_path + "/monthly_sums/" + bias_corr + "_" + model + "_" + 
                     scenario + "_ss.nc")
 
     #If output doesn't already exist, create it
@@ -157,9 +176,19 @@ if variable=="s0":
 
         ### Define file locations ###
     
-        xtr1_files_to_merge=glob.glob(f'{data_path_var}/{awra_add}{model}/historical/r1i1p1/{ccam_add}r240x120-{bias_corr}-AWAP/latest/day/ss/*.nc')
+        if bias_corr=="CCAM":
+            add="ISIMIP2b"
+        else:
+            add = bias_corr
+            
+        xtr1_files_to_merge=glob.glob(str(data_path_var + '/' + awra_add + model + 
+                                         '/historical/r1i1p1/' + ccam_add + 
+                                         'r240x120-' + add + '-AWAP/latest/day/' +
+                                         variable + '/*1960*.nc'))
     
-        xtr2_files_to_merge=glob.glob(f'{data_path_var}/{awra_add}{model}/{scenario}/r1i1p1/{ccam_add}r240x120-{bias_corr}-AWAP/latest/day/ss/*.nc')
+        xtr2_files_to_merge=glob.glob(str(data_path_var + '/' + awra_add + model + '/' + scenario + 
+                                          '/r1i1p1/' + ccam_add + 'r240x120-' + add + '-AWAP/' + 
+                                          'latest/day/' + variable + '/*2006*.nc'))
 
         xtr1_files_to_merge.extend(xtr2_files_to_merge)
     
@@ -167,11 +196,11 @@ if variable=="s0":
 
             ### Calculate monthly sums ###
             os.system("cdo monsum " + xtr1_files_to_merge[file_ms] + " " + temp_dir_path +
-                  "/ss_" + str(file_ms) + ".nc")
+                      "/ss_" + str(file_ms) + ".nc")
 
         ### Merge monthly sum files ###
-        os.system("cdo mergetime " + temp_dir_path + "/ss_*.nc /scratch/w97/amu561/monthly_sums/" +
-              bias_corr + "_" + model + "_" + scenario + "_ss.nc")
+        os.system("cdo mergetime " + temp_dir_path + "/ss_*.nc " + scratch_path +
+                  "/monthly_sums/" + bias_corr + "_" + model + "_" + scenario + "_ss.nc")
 
 
 ### Delete temporary directory ###
@@ -242,8 +271,9 @@ if variable=='s0':
     var_name='sm'
 else:
     var_name=variable
-out_file = str(out_path + "/drought_metrics_" + bias_corr + "_" + model + "_" + var_name + "_" + 
-        scenario + "_" + str(scale) + ".nc")
+out_file = str(out_path + "/drought_metrics_" + bias_corr + "_" + model + "_" + 
+               var_name + "_" + scenario + "_" + str(scale) + ".nc")
+               
 ##########################################
 ##########################################
 ##########################################

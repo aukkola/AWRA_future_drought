@@ -13,4 +13,4 @@
 module use /g/data/hh5/public/modules
 module load conda/analysis3
 
-python3 /g/data/w97/amu561/Steven_CABLE_runs/drought_scripts/template_drought_metric_complete_3_month.py "BIAS-METHOD" "MODEL" "SCENARIO" "VARIABLE"
+python3 /g/data/w97/amu561/Steven_CABLE_runs/scripts/drought_scripts/template_drought_metric_complete_3_month.py "BIAS-METHOD" "MODEL" "SCENARIO" "VARIABLE"

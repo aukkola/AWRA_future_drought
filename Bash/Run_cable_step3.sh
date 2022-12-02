@@ -9,7 +9,7 @@
 #PBS -l ncpus=48
 #PBS -j oe
 #PBS -l wd
-#PBS -l storage=gdata/w97+gdata/wd9+scratch/w97+gdata/wj02
+#PBS -l storage=gdata/w97+gdata/wd9+scratch/w97+gdata/wj02+gdata/oq98
 #PBS -M a.ukkola@unsw.edu.au
 
 module unload openmpi
@@ -93,7 +93,7 @@ met_indir=$wg_out_path"/"${model}"/"${experiment}"/"${bc_method}"/"
 first_yr=$year
 
 #Run first 5 years
-while [ $year -le $((first_yr+4)) -a $year -le $endYr ]
+while [ $year -le $((first_yr+10)) -a $year -le $endYr ]
 do
   
 
@@ -143,10 +143,11 @@ done
 
 
 #Then submit next 5 years
+#line break problems again, having it all on one line...
+cd $rundir
 
 qsub -v "path=$path","wg_out_path=$wg_out_path","model=$model","experiment=$experiment",\
-"bc_method=$bc_method","startYr=$startYr","endYr=$endYr","year=$year","cable_src_path=$cable_src_path" \
-Run_cable_step3.sh 
+"bc_method=$bc_method","startYr=$startYr","endYr=$endYr","year=$year","cable_src_path=$cable_src_path" Run_cable_step3.sh 
 
 
 

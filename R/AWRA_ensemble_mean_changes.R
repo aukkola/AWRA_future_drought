@@ -21,7 +21,7 @@ all_years <- 1960:2099
 hist_yrs <- c(1970, 2005) #start and end 
 fut_yrs  <- c(2064, 2099)
 
-#Variables to plot  
+#Variables to plot 
 variables <- c("pr", "qtot", "sm")
 
 rcps <- c("rcp45", "rcp85")
@@ -96,8 +96,10 @@ for (r in 1:length(rcps)) {
         
         #If these exist already, skip to speed up code
         
-        if (file.exists(out_file_duration) & file.exists(out_file_intensity)) next
-        
+        if (file.exists(out_file_duration) & file.exists(out_file_intensity)) {
+          print ("skipping")
+          next
+        }
         
         
         ################

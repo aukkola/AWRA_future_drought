@@ -9,7 +9,7 @@
 #PBS -l ncpus=1
 #PBS -j oe
 #PBS -l wd
-#PBS -l storage=gdata/w97+scratch/w97
+#PBS -l storage=gdata/w97+scratch/w97+gdata/oq98
 #PBS -M a.ukkola@unsw.edu.au
 
 

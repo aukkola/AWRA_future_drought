@@ -93,6 +93,12 @@ isoil <- raster(gridinfo, varname="isoil")
 landsea[is.na(isoil)] <- 1
 
 
+######################
+### dummy variable ###
+######################
+
+dummy_data <- lai[[1:3]]
+
 
 ##########################
 ### Write new gridinfo ###
@@ -125,8 +131,9 @@ landsea_var <- ncvar_def("landsea", units="-", dim=list(nc$dim$longitude,
                                                           nc$dim$latitude), prec="integer")
 
 #Dummy variable to allow rad dimension to be added to file
-dummy_var <- ncvar_def("dummy", units="-", dim=raddim, prec="double")
-
+#dummy_var <- ncvar_def("dummy", units="-", dim=raddim, prec="double")
+dummy_var <- ncvar_def("dummy", units="-", dim=list(nc$dim$longitude,
+                                                    nc$dim$latitude, raddim), prec="double")
 
 
 #Add new variables
@@ -146,7 +153,7 @@ ncvar_put(nc, varid=lai_var, vals=aperm(as.array(flip(lai, direction='y')), c(2,
 ncvar_put(nc, varid=patchfrac_var, vals=aperm(as.array(flip(patchfrac, direction='y')), c(2,1,3))) 
 ncvar_put(nc, varid=iveg_var, vals=aperm(as.array(flip(iveg, direction='y')), c(2,1,3))) 
 ncvar_put(nc, varid=landsea_var, vals=t(as.matrix(flip(landsea, direction='y'))))
-ncvar_put(nc, varid=dummy_var, vals=1:3)
+ncvar_put(nc, varid=dummy_var, vals=aperm(as.array(flip(dummy_data, direction='y')), c(2,1,3)))
 
 
 nc_close(nc)
@@ -171,7 +178,10 @@ nc_close(nc)
 # 
 # 
 
-
-
+in_file="/g/data/w97/amu561/Steven_CABLE_runs/CABLE_inputs/gridinfo_AWRA_matched_veg_inputs.nc"
+temp_mask="/g/data/w97/amu561/Steven_CABLE_runs/CABLE_inputs/landsea.nc"
+cp $in_file temp_grid.nc
+cdo -L div $in_file -nec,1 $temp_mask temp.nc
+mv temp.nc $in_file
 
 
