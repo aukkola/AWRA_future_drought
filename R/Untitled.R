@@ -45,20 +45,18 @@ for (r in 1:length(rcps)) {
   #Variables
   for (v in 1:length(variables)) {
     
+    
+    #Save name
+    exp_name <- vector()
+    
   #BC methods
   for (b in 1:length(bc_methods)) {
     
     #Get GCMs
     gcms <- list.files(paste0(path, "/drought_metrics/", scale, "-month/", bc_methods[b]))
-    
-    #Save name
-    exp_name <- vector()
-    
+     
     #GCMs
     for (g in 1:length(gcms)) {
-      
-      #Save name
-      exp_name <- append(exp_name, paste0(bc_methods[b], "_", gcms[g]))
       
          
         #Initialise
@@ -86,6 +84,10 @@ for (r in 1:length(rcps)) {
           next
         }
         
+        #Save name
+        exp_name <- append(exp_name, paste0(bc_methods[b], "_", gcms[g]))
+        
+        
         #Get metrics data
         diff_duration  <- raster(data_file, varname="duration")
         diff_intensity <- raster(data_file, varname="intensity")
@@ -97,12 +99,16 @@ for (r in 1:length(rcps)) {
         intensity[[r]][[v]] <- addLayer(intensity[[r]][[v]], diff_intensity)
         
         
-      } #variables
+      
       
     } #GCMs
     
   } #BC
-  
+    
+    names(duration[[r]][[v]]) <- exp_name
+    
+    
+  } #variables
   names(duration[[r]]) <- variables
   
 } #RCPs

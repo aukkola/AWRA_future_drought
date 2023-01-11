@@ -12,7 +12,7 @@ write_daily_flt <- function(data, variable, outdir) {
     #Skip years between 2006-2053 as only running CABLE for 2054-2099
     yr <- as.numeric(format(dates[n], format="%Y"))
     
-    if (yr >2005 & yr < 2054) next
+    #if (yr >2005 & yr < 2054) next
     
     
     day_stamp <- format(dates[n], format="%Y%m%d")
@@ -59,7 +59,7 @@ write_daily_flt_lwdown <- function(tmean, tmin, swdown, variable, outdir) {
     #Skip years between 2006-2053 as only running CABLE for 2054-2099
     yr <- as.numeric(format(dates[n], format="%Y"))
     
-    if (yr >2005 & yr < 2054) next
+    #if (yr >2005 & yr < 2054) next
     
     
     
@@ -118,7 +118,7 @@ write_daily_flt_vpd <- function(tmax, tmin, variable, outdir) {
     #Skip years between 2006-2053 as only running CABLE for 2054-2099
     yr <- as.numeric(format(dates[n], format="%Y"))
     
-    if (yr >2005 & yr < 2054) next
+   # if (yr >2005 & yr < 2054) next
     
     
     ### Calculate VPD for the day ###

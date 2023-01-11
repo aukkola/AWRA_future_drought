@@ -69,7 +69,7 @@ mkdir -p $scratch_path
 wg_path=$path"/AWAP_to_netcdf/"
 cable_src_path=$path"/CABLE_source/"
 
-branch="trunk"
+branch="trunk_31Mar2021"
 
 #Path to AWRA inputs (don't change)
 awra_path="/g/data/wj02/COMPLIANT/HMINPUT/output/AUS-5/BoM/"
@@ -132,9 +132,13 @@ echo "Submitting weather generator job #-----------------------"
 cd $rundir
 
 #copy executable and namelist here
-cp $cable_src_path'/'$branch'/offline/cable-mpi' .
-cp $cable_src_path'/'$branch'/offline/create_cable-nml_co2.sh' .
+#Something funny goin on with executables, copy from temp3
+#to make sure all runs run on same executable
+cp $rundir'/../temp3/cable-mpi' .
+cp $rundir'/../temp3/create_cable-nml_co2.sh' .
 
+#cp $cable_src_path'/'$branch'/offline/cable-mpi' .
+#cp $cable_src_path'/trunk/offline/create_cable-nml_co2.sh' .
 
 
 qsub -v "path=${path}","scratch_path=${scratch_path}","model=${model}","wg_path=${wg_path}",\

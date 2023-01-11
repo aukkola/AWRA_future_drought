@@ -86,6 +86,13 @@ mkdir $nml_noCO2
 mkdir $logs_noCO2
 
 
+#Copy historical restart file (last yr of historical simulation)
+if [ $experiment == "rcp45" -o $experiment == "rcp45" ]
+then
+  cp $cable_out_path_CO2"/../..//historical/"${bc_method}"/restarts/restart_$((startYr-1)).nc" $restarts_CO2
+fi
+
+
 #Met input directory
 met_indir=$wg_out_path"/"${model}"/"${experiment}"/"${bc_method}"/"
 
@@ -93,7 +100,7 @@ met_indir=$wg_out_path"/"${model}"/"${experiment}"/"${bc_method}"/"
 first_yr=$year
 
 #Run first 5 years
-while [ $year -le $((first_yr+10)) -a $year -le $endYr ]
+while [ $year -le $((first_yr+12)) -a $year -le $endYr ]
 do
   
 
@@ -143,73 +150,64 @@ done
 
 
 #Then submit next 5 years
-#line break problems again, having it all on one line...
 cd $rundir
 
-qsub -v "path=$path","wg_out_path=$wg_out_path","model=$model","experiment=$experiment",\
-"bc_method=$bc_method","startYr=$startYr","endYr=$endYr","year=$year","cable_src_path=$cable_src_path" Run_cable_step3.sh 
+if [ $year -lt $endYr ]
+then
+  #line break problems again, having it all on one line...
+  qsub -v "path=$path","wg_out_path=$wg_out_path","model=$model","experiment=$experiment","bc_method=$bc_method","startYr=$startYr","endYr=$endYr","year=$year","cable_src_path=$cable_src_path" Run_cable_step3.sh
+fi
 
 
 
+#--------------------------------------------------------------------------------
 
-# #Loop through years
-# for year in $(seq $startYr $endYr)
+####################
+### Constant CO2 ###
+####################
+
+# #Copy historical restart file (last yr of historical simulation)
+# if [ $experiment == "rcp45" -o $experiment == "rcp45" ]
+# then
+#   cp $cable_out_path_noCO2"/../..//historical/"${bc_method}"/restarts/restart_$((startYr-1)).nc" $restarts_noCO2
+# fi
+
+
+# #Run first 5 years
+# while [ $year -le $((first_yr+12)) -a $year -le $endYr ]
 # do
 # 
-#   echo "Step 3: Running CABLE (increasing CO2) for $year #-----------------------"
 # 
-#   #Met input directory
-#   met_indir=$wg_out_path"/"${model}"/"${experiment}"/"${bc_method}"/"
+#   echo "Step 3: Running CABLE (constant CO2) for $year #-----------------------"
 # 
-# 
-# 
-#   ######################
-#   ### Increasing CO2 ###
-#   ######################
-# 
-#   #Set output files
-#   logfile=$logs_CO2"/cable_log_${year}.txt"
-#   outfile=$outs_CO2"/cable_out_${year}.nc"
-#   restart_in=$restarts_CO2"/restart_${prev_year}.nc"
-#   restart_out=$restarts_CO2"/restart_${year}.nc"
-#   namelist=$nml_CO2"/cable_${year}_${gw_tag}.nml"
+#   #Set previous year
+#   prev_year=$((year-1))
 # 
 # 
-#   #Get CO2 concentration for the year (second command removes a line ending character)
-#   co2=`echo "${co2_file[$year]}" | tr '\r' ' ' `
+#     #Run with CO2 set to 1960 level
 # 
-#   #Create namelist
-#   sh ./create_cable-nml_co2.sh -y $year -l $logfile -o $outfile -i $restart_in -r $restart_out -c $co2 -m $met_indir
-# 
-#   #Run CABLE
-#   mpirun -n 48 ./cable-mpi ./cable_on.nml
-# 
-#   #Copy namelist
-#   cp cable_on.nml $namelist
-# 
-# done
-# 
-
-
-# #Loop through years
-# for year in $(seq $startYr $endYr)
-# do
-# 
-#   echo "Step 4: Running CABLE (constant CO2) for $year #-----------------------"
+#     #Set output files
+#     logfile=$logs_noCO2"/cable_log_${year}.txt"
+#     outfile=$outs_noCO2"/cable_out_${year}.nc"
+#     restart_in=$restarts_noCO2"/restart_${prev_year}.nc"
+#     restart_out=$restarts_noCO2"/restart_${year}.nc"
+#     namelist=$nml_noCO2"/cable_${year}.nml"
 # 
 # 
-#   ####################
-#   ### Constant CO2 ###
-#   ####################
+#   #Check that restart file exists (except for start year of historical expt)
+#   #stop if not to avoid cable running without a restart
 # 
-#   #Run with CO2 set to 1960 level
-# 
-#   #Set output files
-#   logfile=$logs_noCO2"/cable_log_${year}.txt"
-#   outfile=$outs_noCO2"/cable_out_${year}.nc"
-#   restart_in=$restarts_noCO2"/restart_${prev_year}.nc"
-#   restart_out=$restarts_noCO2"/restart_${year}.nc"
-#   namelist=$nml_noCO2"/cable_${year}.nml"
+#   #If restart doesn't exist
+#   if [ ! -f $restart_in ]
+#   then
+#     if [ $experiment == "historical" -a $year -eq $((startYr)) ]
+#     then
+#       echo "restart doesn't exist, first year of historical experiment"
+#     else
+#       echo "ERROR: restart_in does not exist"
+#       exit 1
+#     fi
+#   fi
 # 
 # 
 #   #Get CO2 concentration for 1960
@@ -218,13 +216,22 @@ qsub -v "path=$path","wg_out_path=$wg_out_path","model=$model","experiment=$expe
 #   #Create namelist
 #   sh ./create_cable-nml_co2.sh -y $year -l $logfile -o $outfile -i $restart_in -r $restart_out -c $co2 -m $met_indir
 # 
+# 
 #   #Run CABLE
 #   mpirun -n 48 ./cable-mpi ./cable_on.nml
-# 
-#   prev_year=$year
 # 
 #   #Copy namelist
 #   cp cable_on.nml $namelist
 # 
+#   year=$((year+1))
+# 
 # done
-
+# 
+# 
+# #Then submit next 5 years
+# cd $rundir
+# 
+# #line break problems again, having it all on one line...
+# qsub -v "path=$path","wg_out_path=$wg_out_path","model=$model","experiment=$experiment","bc_method=$bc_method","startYr=$startYr","endYr=$endYr","year=$year","cable_src_path=$cable_src_path" Run_cable_step3.sh 
+# 
+# 
