@@ -76,7 +76,7 @@ add_raster_legend2 <-function(cols,limits,labelss=NULL,x='bottomleft',add=TRUE,
   #changed y=max(yt+max(yt*0.15)) from y=max(yt-max(yt*0.35))
   #Had to change this for some plots, but change doesn't work for some others...
  # if (ysp_title_old) {
-    text(x=mean(xt[2:length(xt)]),y=max(yt-max(yt*0.25)),main_title,xpd=NA, cex=title.cex)
+    text(x=mean(xt[2:length(xt)]),y=1.9, main_title, xpd=NA, cex=title.cex)
 #  } else {
  #   text(x=mean(xt),y=max(yt+max(yt*0.1)),main_title,xpd=NA, cex=title.cex)
 #  }

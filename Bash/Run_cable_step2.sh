@@ -71,7 +71,7 @@ wg_out_path=$scratch_path"/CABLE_inputs/Weather_generator_outputs/"
 
 #Run weather generator
 echo "Running WG"
-./awap_to_netcdf $model $experiment $bc_method $wg_in_path $wg_out_path
+./awap_to_netcdf $model $experiment $bc_method $wg_in_path $wg_out_path $startYr $endYr
 
 
 #Check that produces the correct number of files

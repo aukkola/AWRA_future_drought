@@ -72,7 +72,7 @@ cable_src_path=$path"/CABLE_source/"
 branch="trunk_31Mar2021"
 
 #Path to AWRA inputs (don't change)
-awra_path="/g/data/wj02/COMPLIANT/HMINPUT/output/AUS-5/BoM/"
+awra_path="/g/data/wj02/COMPLIANT_PUBLISHED/HMINPUT/output/AUS-5/BoM/" #"/g/data/wj02/COMPLIANT/HMINPUT/output/AUS-5/BoM/"
 
 
 
