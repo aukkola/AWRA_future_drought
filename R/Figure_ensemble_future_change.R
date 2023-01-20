@@ -26,7 +26,7 @@ world <- readShapePoly(paste0(path, "../World_shapefile/World"))
 #Set percentile and scale
 percentile <- "Perc_15"
 
-scale      <- 3
+scale      <- 24
 
 #baseline   <- "1970-2005_vs_2064-2099"
 
