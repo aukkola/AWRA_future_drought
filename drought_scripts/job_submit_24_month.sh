@@ -6,7 +6,7 @@
 #PBS -l storage=gdata/er4+scratch/w97+gdata/hh5+gdata/wj02+gdata/w97
 #PBS -N drought_metric_job_BIAS-METHOD_MODEL_SCENARIO_VARIABLE_REGION 
 #PBS -l walltime=00:10:00
-#PBS -l ncpus=48
+#PBS -l ncpus=1
 #PBS -l mem=1gb
 
 PBS_PATH=/g/data/w97/amu561/Steven_CABLE_runs/scripts/drought_scripts/pbs_jobs

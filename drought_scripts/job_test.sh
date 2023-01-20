@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#PBS -P w97
-#PBS -q express
-#PBS -l storage=gdata/er4+scratch/w97+gdata/hh5+gdata/wj02+gdata/eg3+gdata/w97
-#PBS -l walltime=06:00:00
-#PBS -l ncpus=24
+#PBS -P oq98
+#PBS -q normal
+#PBS -l storage=gdata/er4+scratch/w97+gdata/hh5+gdata/wj02+gdata/eg3+gdata/w97+gdata/oq98
+#PBS -l walltime=02:00:00
+#PBS -l ncpus=1
 #PBS -l mem=10gb
 #PBS -j oe
 

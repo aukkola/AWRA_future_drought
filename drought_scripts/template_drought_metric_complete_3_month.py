@@ -301,10 +301,12 @@ if return_all_tsteps:
 else:
     save_len = int(len(data)*(perc/100)*2)
 
-duration      = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan
-rel_intensity = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan
-intensity     = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan
-#timing        = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan    
+duration          = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan
+rel_intensity     = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan
+rel_intensity_mon = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan
+
+#intensity     = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan
+timing        = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan    
 #tseries       = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan    
 
 if monthly:
@@ -328,17 +330,20 @@ for i in range(len(lat)):
                 metric = drought_metrics(mod_vec=data[:,i,j], lib_path=lib_path, perc=perc, 
                                         monthly=monthly, obs_vec=control_ref[:,i,j],
                                         return_all_tsteps=return_all_tsteps, scale=scale,
-                                        add_metrics=(['rel_intensity', 'intensity', 'threshold']),
-                                        subset=subset)
+                                        add_metrics=(['rel_intensity', 'threshold', 'rel_intensity_monthly',
+                                        'timing']),
+                                        subset=subset, miss_val=miss_val)
         
                 ### Write metrics to variables ###
                 duration[range(np.size(metric['duration'])),i,j]   = metric['duration']  #total drought duration (months)
 
                 rel_intensity[range(np.size(metric['rel_intensity'])),i,j] = metric['rel_intensity'] #average magnitude
+
+                rel_intensity_mon[range(np.size(metric['rel_intensity_monthly'])),i,j] = metric['rel_intensity_monthly'] #average magnitude
             
-                intensity[range(np.size(metric['intensity'])),i,j] = metric['intensity'] #average intensity
+                #intensity[range(np.size(metric['intensity'])),i,j] = metric['intensity'] #average intensity
     
-                #timing[range(np.size(metric['timing'])),i,j]       = metric['timing']    #drought timing (month index)
+                timing[range(np.size(metric['timing'])),i,j]       = metric['timing']    #drought timing (month index)
 
                 #tseries[range(np.size(metric['tseries'])),i,j]       = metric['tseries']    #drought timing (month index)
 
@@ -376,8 +381,10 @@ if monthly:
 #Create data variables
 data_dur  = ncfile.createVariable('duration', 'f8',('time','lat','lon'), fill_value=miss_val)
 data_mag  = ncfile.createVariable('rel_intensity','f8',('time','lat','lon'), fill_value=miss_val)
-data_int  = ncfile.createVariable('intensity','f8',('time','lat','lon'), fill_value=miss_val)
-#data_tim  = ncfile.createVariable('timing',   'i4',('time','lat','lon'), fill_value=miss_val)
+data_rel  = ncfile.createVariable('rel_intensity_by_month','f8',('time','lat','lon'), fill_value=miss_val)
+
+#data_int  = ncfile.createVariable('intensity','f8',('time','lat','lon'), fill_value=miss_val)
+data_tim  = ncfile.createVariable('timing',   'i4',('time','lat','lon'), fill_value=miss_val)
 #data_ts   = ncfile.createVariable('tseries',   'i4',('time','lat','lon'), fill_value=miss_val)
 
 #Create data variable for threshold
@@ -396,8 +403,10 @@ time.calendar   = 'gregorian'
 
 data_dur.long_name = 'drought event duration (no. months)'
 data_mag.long_name = 'drought event relative intensity (%)'
-data_int.long_name = 'drought event intensity (mm)'
-#data_tim.long_name = 'drought event timing (month index)'
+data_rel.long_name = 'drought month relative intensity (%)'
+
+#data_int.long_name = 'drought event intensity (mm)'
+data_tim.long_name = 'drought event timing (binary drought/non-drought index)'
 data_thr.long_name = 'drought threshold (mm)'
 #data_ts.long_name  = 'original time series'
 
@@ -420,8 +429,10 @@ if monthly:
 #Write data to data variables
 data_dur[:,:,:] = duration    
 data_mag[:,:,:] = rel_intensity
-data_int[:,:,:] = intensity
-#data_tim[:,:,:] = timing
+data_rel[:,:,:] = rel_intensity_mon
+
+#data_int[:,:,:] = intensity
+data_tim[:,:,:] = timing
 #data_ts[:,:,:]  = tseries
 
 if monthly:    
