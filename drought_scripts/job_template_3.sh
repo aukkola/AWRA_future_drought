@@ -4,7 +4,7 @@
 #PBS -q normal
 #PBS -l storage=gdata/er4+scratch/w97+gdata/hh5+gdata/wj02+gdata/eg3+gdata/w97+gdata/oq98
 #PBS -N drought_metric_job_BIAS-METHOD_MODEL_SCENARIO_VARIABLE_REGION 
-#PBS -l walltime=03:00:00
+#PBS -l walltime=02:00:00
 #PBS -l ncpus=1
 #PBS -l mem=60gb
 #PBS -j oe

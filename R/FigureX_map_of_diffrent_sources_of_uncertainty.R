@@ -408,8 +408,6 @@ for (m in 1:length(metrics)) {
     text(118, -15, ci_text, cex=0.8, adj=0.5)
     
     
-    
-    
     ### RCP scenario ###
     
     #Plot (multiply by 100 to convert to percentage)
@@ -434,7 +432,6 @@ for (m in 1:length(metrics)) {
     
     text(118, -12, text, cex=0.8)
     text(118, -15, ci_text, cex=0.8, adj=0.5)
-    
     
     
     
