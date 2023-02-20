@@ -69,7 +69,7 @@ cols_hist <- colorRampPalette(c("#ffffe5", "#fee391",
 
 #Future difference
 col_opts <- rev(brewer.pal(11, 'RdYlBu'))
-col_opts[6] <- "grey80"
+#col_opts[6] <- "grey80"
 cols_diff <- colorRampPalette(col_opts) 
 
 #Limits
@@ -86,7 +86,7 @@ lims_hist <- list(pr =   list(duration  = c(1, 1.8, 1.9, 2, 2.1, 2.2, 2.3, 2.4, 
 lims_diff <- list(duration      = c(-1000, -3, -2, -1, -0.5, 0.5, 1, 2, 3, 1000),
                   intensity     = c(-10000, -30, -25, -20, -16, -12, -8, -4, -2, 2, 4, 8, 12, 16, 20, 25, 30, 10000),
                   rel_intensity_by_month = c(-10000, -8, -6, -4, -2, 2, 4, 6, 8, 10000), #c(-100, -40, -30, -20, -10, 10, 20, 30, 40, 100),
-                  frequency     = c(-100, -5, -4.5, -4, -3.5, -3, -2.5, -2, -1.5, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 100))
+                  frequency     = c(-100, -15, -10, -5, -2.5, 2.5, 5, 10, 15, 100))
 
 
 unit <- c("% points", "% points") # (#expression("mm"~"month"^"-1"), expression("no. events 10 yrs"^"-1"))
@@ -157,6 +157,19 @@ for (m in 1:length(metrics)) {
         data_rcp  <- brick(lapply(data_files_rcp, raster))
         
         
+        #Need to convert frequency to "percentage of time under drought"
+        #Divide by the number of years (in this case 36 as using the mean of two 36-yr periods,
+        #i.e. 1970-2005 and 2064-2099)
+        #Note something a bit funny going on. 18 drought months during hte historical period
+        #but would expect ~16 (15% of 108 months (i.e. 36*3, the number of years multiplied by 3 months in each season))
+        if (metrics[m] == "frequency") {
+          
+          data_hist <- data_hist / (36*3) * 100
+          data_rcp  <- data_rcp / (36*3) * 100
+          
+        }
+        
+        
         
         #Calculate historical model mean
         ens_median_hist <- calc(data_hist, median)
@@ -179,11 +192,21 @@ for (m in 1:length(metrics)) {
         ### Plotting ###
         ################
         
+        #Set pixels with no model agreement to some crazy values
+        #(will plot these in grey)
+        mask_value <- -1000000000
+        
+        ens_median_rcp[mod_agr_rcp == 0] <- mask_value
+        
+       
       
         ### Future change ###
   
         #Plot
-        image(ens_median_rcp, breaks=lims_diff[[metrics[m]]], col=cols_diff(length(lims_diff[[metrics[m]]])-1),
+        len <- length(lims_diff[[metrics[m]]])
+        
+        image(ens_median_rcp, breaks=c(mask_value, mask_value+1, lims_diff[[metrics[m]]][2:len]), 
+                                       col=c("grey80", cols_diff(len-1)),
               axes=FALSE, ann=FALSE, asp=1)
         
         
@@ -210,23 +233,25 @@ for (m in 1:length(metrics)) {
         
         ### Stippling (where models don't agree) ###
         
-        stipple_raster <- raster(resolution=c(0.25, 0.25), ext=extent(mod_agr_rcp))
-        
-        #Resample so points larger
-        fut_mod_agr <- resample(mod_agr_rcp, stipple_raster)
-        
-        
-        #Find pixels where model's don't agree
-        ind    <- which(values(fut_mod_agr) == 0)
-        coords <- coordinates(fut_mod_agr)
-        
-        #Add stippling
-        points(coords[ind,1], coords[ind,2], pch=20, lwd=lwd, cex=cex)
-        
+        # stipple_raster <- raster(resolution=c(0.25, 0.25), ext=extent(mod_agr_rcp))
+        # 
+        # #Resample so points larger
+        # fut_mod_agr <- resample(mod_agr_rcp, stipple_raster)
+        # 
+        # 
+        # #Find pixels where model's don't agree
+        # ind    <- which(values(fut_mod_agr) == 0)
+        # coords <- coordinates(fut_mod_agr)
+        # 
+        # #Add stippling
+        # points(coords[ind,1], coords[ind,2], pch=20, lwd=lwd, cex=cex)
+        # 
 
+        ### Variable label ###
+        if (s==1) mtext(side=3, line=1, font=2, text=var_labels[v], xpd=NA)
+        
         
         ### Season label ###
-        
         if (v==1) mtext(side=2, line=1, text=seasons[s])
         
 

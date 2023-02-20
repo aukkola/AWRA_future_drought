@@ -26,7 +26,7 @@ world <- readShapePoly(paste0(path, "../World_shapefile/World"))
 #Set percentile and scale
 percentile <- "Perc_15"
 
-scale      <- 24
+scale      <- 3
 
 #baseline   <- "1970-2005_vs_2064-2099"
 
@@ -67,7 +67,7 @@ cols_hist <- colorRampPalette(c("#ffffe5", "#fee391",
 
 #Future difference
 col_opts <- rev(brewer.pal(11, 'RdYlBu'))
-col_opts[6] <- "grey80"
+#col_opts[6] <- "grey80"
 cols_diff <- colorRampPalette(col_opts) 
 
 #Limits
@@ -81,10 +81,10 @@ lims_hist <- list(pr =   list(duration  = c(1, 1.8, 1.9, 2, 2.1, 2.2, 2.3, 2.4, 
                               rel_intensity = c(0, 30, 40, 50, 60, 70, 80, 90, 100),
                               frequency = c(0, 8.5, 8.8, 9.1, 9.4, 9.7, 10, 10.3, 1000)))
 
-lims_diff <- list(duration      = c(-1000, -3, -2, -1, -0.5, 0.5, 1, 2, 3, 1000),
-                  intensity     = c(-10000, -30, -25, -20, -16, -12, -8, -4, -2, 2, 4, 8, 12, 16, 20, 25, 30, 10000),
-                  rel_intensity = c(-10000, -8, -6, -4, -2, 2, 4, 6, 8, 10000), #c(-100, -40, -30, -20, -10, 10, 20, 30, 40, 100),
-                  frequency     = c(-100, -5, -4.5, -4, -3.5, -3, -2.5, -2, -1.5, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 100))
+lims_diff <- list(duration      = c(-1000, -3, -2, -1, -0.5, 0, 0.5, 1, 2, 3, 1000),
+                  intensity     = c(-10000, -30, -25, -20, -16, -12, -8, -4, -2, 0, 2, 4, 8, 12, 16, 20, 25, 30, 10000),
+                  rel_intensity = c(-10000, -8, -6, -4, -2, 0,  2, 4, 6, 8, 10000), #c(-100, -40, -30, -20, -10, 10, 20, 30, 40, 100),
+                  frequency     = c(-100, -5, -4.5, -4, -3.5, -3, -2.5, -2, -1.5,0, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 100))
 
 
 unit <- c("months", "% points") # (#expression("mm"~"month"^"-1"), expression("no. events 10 yrs"^"-1"))
@@ -226,8 +226,19 @@ for (m in 1:length(metrics)) {
     for (p in 1:length(plot_data)) {
       
       
+      
+      
+      #Set pixels with no model agreement to some crazy values
+      #(will plot these in grey)
+      mask_value <- -1000000000
+        
+      plot_data[[p]][agr_data[[p]] == 0] <- mask_value
+      
+      
       #Plot
-      image(plot_data[[p]], breaks=lims_diff[[metrics[m]]], col=cols_diff(length(lims_diff[[metrics[m]]])-1),
+      len <- length(lims_diff[[metrics[m]]])
+      image(plot_data[[p]], breaks=c(mask_value, mask_value+1, lims_diff[[metrics[m]]][2:len]), 
+            col=c("grey80", cols_diff(len-1)),
             axes=FALSE, ann=FALSE, asp=1)
       
       
@@ -252,21 +263,21 @@ for (m in 1:length(metrics)) {
       mtext(side=3, line=-3, text=paste0(sprintf("%.1f", land_area), "%"), adj=0.1, cex=0.65)
       
       
-      #Stippling (where models don't agree)
-     
-      stipple_raster <- raster(resolution=c(0.25, 0.25), ext=extent(agr_data[[p]]))
-      
-      #Resample so points larger
-      fut_mod_agr <- resample(agr_data[[p]], stipple_raster)
-      
-      
-      #Find pixels where model's don't agree
-      ind    <- which(values(fut_mod_agr) == 0)
-      coords <- coordinates(fut_mod_agr)
-      
-      #Add stippling
-      points(coords[ind,1], coords[ind,2], pch=20, lwd=lwd, cex=cex)
-      
+      # #Stippling (where models don't agree)
+      # 
+      # stipple_raster <- raster(resolution=c(0.25, 0.25), ext=extent(agr_data[[p]]))
+      # 
+      # #Resample so points larger
+      # fut_mod_agr <- resample(agr_data[[p]], stipple_raster)
+      # 
+      # 
+      # #Find pixels where model's don't agree
+      # ind    <- which(values(fut_mod_agr) == 0)
+      # coords <- coordinates(fut_mod_agr)
+      # 
+      # #Add stippling
+      # points(coords[ind,1], coords[ind,2], pch=20, lwd=lwd, cex=cex)
+      # 
       # #Panel number
       # if (p ==1 ){
       #   mtext(side=3, line=0, adj=0, text="c", font=2, xpd=NA, cex=panel_cex) #panel number
