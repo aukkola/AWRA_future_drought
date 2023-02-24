@@ -145,15 +145,16 @@ for (m in 1:length(metrics)) {
     #netcdf years are wrong so setting indices manually (data runs 1900-2021)
     obs_data <- obs_data[[841:nlayers(obs_data)]]
     
-    #Mask obs data (use an AWRA input file for masking for simplicity)
-    mask_data <- raster(paste0(path, "/AWRA_fields/",
-                               "AWRA_fractional_vegetation_cover_monthly_climatology_1960_2005.nc"))
+   
     
-    
-    
-    obs_mask_file <- paste0(outdir_temp, "/obs_masked.nc")
+    obs_mask_file <- paste0(outdir_temp, "/obs_masked_", vars[v], "_", metrics[m], ".nc")
     
     if (!file.exists(obs_mask_file)) {
+      
+      #Mask obs data (use an AWRA input file for masking for simplicity)
+      mask_data <- raster(paste0(path, "/AWRA_fields/",
+                                 "AWRA_fractional_vegetation_cover_monthly_climatology_1960_2005.nc"))
+      
       #(need to first crop AGCD data as slightly larger extent than AWAP runs)
       obs_data_masked <- mask(crop(obs_data, mask_data), mask_data)
       

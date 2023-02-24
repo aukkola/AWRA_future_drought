@@ -23,3 +23,22 @@ areal_mean <- function(hdata) {
   return(out)
 }
 
+
+
+
+areal_mean_terra <- function(data) {
+  
+  global(data, "mean", na.rm=TRUE, weights=cellSize(data))
+  #(cellsize only returns the area for cells that are not NA
+  #so don't need to worry about NA-cells here)
+}
+
+
+
+
+
+
+
+
+
+

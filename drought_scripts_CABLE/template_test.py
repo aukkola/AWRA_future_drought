@@ -13,17 +13,15 @@ import datetime
 import xarray as xr
 
 #################
+
 ### Set paths ###
 #################
 
-lib_path  = "/g/data/w97/amu561/Steven_CABLE_runs/scripts/drought_scripts/functions"
+lib_path  = "/g/data/w97/amu561/Steven_CABLE_runs/drought_scripts/functions"
 
 ##### ALTERTED #####
 data_path = "/g/data/wj02/COMPLIANT"
 #data_path = "/g/data/wj02/AWRA_OUTPUT"
-
-scratch_path = '/scratch/w97/amu561/'
-
 
 # Add lib_path to os directory
 sys.path.append(os.path.abspath(lib_path))
@@ -72,7 +70,7 @@ obs_ref = False
 obs_var = variable  
 
 ### Set historical refernce period ###
-baseline=[1970,2005]
+baseline=[1960,2005]
 
 ##########################
 ### FILE PREPROCESSING ###
@@ -102,29 +100,16 @@ if variable in output_variable and bias_corr in compliant:
 
 ### Get historical and future simulations ###
 
-#historical
 if bias_corr=="CCAM":
-    files_1_string=str(data_path_var + '/' + awra_add + model + '/historical/r1i1p1/' +
-                       ccam_add + 'r240x120-ISIMIP2b-AWAP/latest/day/' +
-                       variable+ '/*1960*.nc')
+    files_1_string=f'{data_path_var}/{awra_add}{model}/historical/r1i1p1/{ccam_add}r240x120-ISIMIP2b-AWAP/latest/day/{variable}/*.nc'
 else:
-    files_1_string=str(data_path_var + '/' + awra_add + model +'/historical/r1i1p1/' +
-                       ccam_add + 'r240x120-' + bias_corr + '-AWAP/latest/day/' +
-                       variable + '/*1960*.nc')
-
-#Files to merge                    
+    files_1_string=f'{data_path_var}/{awra_add}{model}/historical/r1i1p1/{ccam_add}r240x120-{bias_corr}-AWAP/latest/day/{variable}/*.nc'
 files_to_merge1=glob.glob(files_1_string)
 
-#Future
 if bias_corr=="CCAM":
-    files_2_string=str(data_path_var + '/' + awra_add + model + '/' + scenario + 
-                    '/r1i1p1/' + ccam_add + 'r240x120-ISIMIP2b-AWAP/' + 
-                    'latest/day/' + variable + '/*2006*.nc')
+ files_2_string=f'{data_path_var}/{awra_add}{model}/{scenario}/r1i1p1/{ccam_add}r240x120-ISIMIP2b-AWAP/latest/day/{variable}/*.nc'
 else:
-    files_2_string=str(data_path_var + '/' + awra_add + model + '/' + scenario + 
-                       '/r1i1p1/' + ccam_add + 'r240x120-' + bias_corr + 
-                       '-AWAP/latest/day/' + variable + '/*2006*.nc')
-
+    files_2_string=f'{data_path_var}/{awra_add}{model}/{scenario}/r1i1p1/{ccam_add}r240x120-{bias_corr}-AWAP/latest/day/{variable}/*.nc'
 files_to_merge2=glob.glob(files_2_string)
 
 files_to_merge1.extend(files_to_merge2)
@@ -134,72 +119,45 @@ files_to_merge1.extend(files_to_merge2)
 temp_dir_path = f"/scratch/w97/amu561/temp/{bias_corr}{model}{scenario}{variable}{str(scale)}"
 os.system("mkdir -p " + temp_dir_path)
 
-os.system("mkdir -p " + scratch_path + "/monthly_sums/")
-
-
-### Location of output file ###
-files= str(scratch_path + "/monthly_sums/" + bias_corr + "_" + 
-           model + "_" + scenario + "_" + variable + ".nc")
-
-
-#Some duplicate time steps, need to skip these when merging
-os.system("export SKIP_SAME_TIME=1")
-
-
-#If output file doesn't alreade exist, create it. Else skip 
-if not os.path.isfile(files):
-
-    for file_ms in range(len(files_to_merge1)):
+for file_ms in range(len(files_to_merge1)):
     
-        ### Calculate monthly sums ###
-        os.system("cdo monsum " + files_to_merge1[file_ms] + " " + temp_dir_path + "/" + 
+    ### Calculate monthly sums ###
+    os.system("cdo monsum " + files_to_merge1[file_ms] + " " + temp_dir_path + "/" + 
               variable + "_" + str(file_ms) + ".nc")
 
-    ### Merge the monthly sum data ###
-    os.system("cdo mergetime " + temp_dir_path + "/" + variable + "*.nc " + scratch_path 
-              + "/monthly_sums/"+ bias_corr + "_" + model + "_" + scenario + "_" + variable + ".nc")
+### Merge the monthly sum data ###
+os.system("cdo mergetime " + temp_dir_path + "/" + variable + "*.nc /scratch/w97/amu561/monthly_sums/"+
+          bias_corr + "_" + model + "_" + scenario + "_" + variable + ".nc")
 
-
-
+### Location of output file ###
+files= str("/scratch/w97/amu561/outputs/monthly_sums/" + bias_corr + "_" + 
+           model + "_" + scenario + "_" + variable + ".nc")
 
 ### Get ss data to add to s0 ###
 
 if variable=="s0":
 
+    ### Define file locations ###
+    
+    xtr1_files_to_merge=glob.glob(f'{data_path_var}/{awra_add}{model}/historical/r1i1p1/{ccam_add}r240x120-{bias_corr}-AWAP/latest/day/ss/*.nc')
+    
+    xtr2_files_to_merge=glob.glob(f'{data_path_var}/{awra_add}{model}/{scenario}/r1i1p1/{ccam_add}r240x120-{bias_corr}-AWAP/latest/day/ss/*.nc')
+
+    xtr1_files_to_merge.extend(xtr2_files_to_merge)
+    
+    for file_ms in range(len(xtr1_files_to_merge)):
+
+        ### Calculate monthly sums ###
+        os.system("cdo monsum " + xtr1_files_to_merge[file_ms] + " " + temp_dir_path +
+                  "/ss_" + str(file_ms) + ".nc")
+
+    ### Merge monthly sum files ###
+    os.system("cdo mergetime " + temp_dir_path + "/ss_*.nc /scratch/w97/amu561/monthly_sums/" +
+              bias_corr + "_" + model + "_" + scenario + "_ss.nc")
+
     ### Location of output file ###
-    xtr_files = str(scratch_path + "/monthly_sums/" + bias_corr + "_" + model + "_" + 
+    xtr_files = str("/scratch/w97/amu561/monthly_sums/" + bias_corr + "_" + model + "_" + 
                     scenario + "_ss.nc")
-
-    #If output doesn't already exist, create it
-    if not os.path.isfile(xtr_files):
-
-        ### Define file locations ###
-    
-        if bias_corr=="CCAM":
-            add="ISIMIP2b"
-        else:
-            add = bias_corr
-            
-        xtr1_files_to_merge=glob.glob(str(data_path_var + '/' + awra_add + model + '/' + scenario + 
-                                          '/r1i1p1/' + ccam_add + 'r240x120-ISIMIP2b-AWAP/' + 
-                                          'latest/day/ss/*2006*.nc'))
-
-        xtr2_files_to_merge=glob.glob(str(data_path_var + '/' + awra_add + model + '/historical/' + 
-                                          '/r1i1p1/' + ccam_add + 'r240x120-ISIMIP2b-AWAP/' + 
-                                          'latest/day/ss/*1960*.nc'))
-
-        xtr1_files_to_merge.extend(xtr2_files_to_merge)
-    
-        for file_ms in range(len(xtr1_files_to_merge)):
-
-            ### Calculate monthly sums ###
-            os.system("cdo monsum " + xtr1_files_to_merge[file_ms] + " " + temp_dir_path +
-                      "/ss_" + str(file_ms) + ".nc")
-
-        ### Merge monthly sum files ###
-        os.system("cdo mergetime " + temp_dir_path + "/ss_*.nc " + scratch_path +
-                  "/monthly_sums/" + bias_corr + "_" + model + "_" + scenario + "_ss.nc")
-
 
 ### Delete temporary directory ###
 #os.system("rm -r " + temp_dir_path) 
@@ -211,6 +169,7 @@ if variable=="s0":
 #Model data
 if variable == "s0":
 
+    
     fh        = Dataset(files, mode='r')
     ds_ss     = Dataset(xtr_files, mode='r')
     s0_data   = fh.variables["s0"][:]
@@ -268,9 +227,8 @@ if variable=='s0':
     var_name='sm'
 else:
     var_name=variable
-out_file = str(out_path + "/drought_metrics_" + bias_corr + "_" + model + "_" + 
-               var_name + "_" + scenario + "_" + str(scale) + ".nc")
-               
+out_file = str(out_path + "/drought_metrics_" + bias_corr + "_" + model + "_" + var_name + "_" + 
+        scenario + "_" + str(scale) + ".nc")
 ##########################################
 ##########################################
 ##########################################
@@ -300,13 +258,11 @@ if return_all_tsteps:
 else:
     save_len = int(len(data)*(perc/100)*2)
 
-duration          = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan
-rel_intensity     = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan
-rel_intensity_mon = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan
-
-#intensity     = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan
+duration      = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan
+rel_intensity = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan
+intensity     = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan
 timing        = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan    
-#tseries       = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan    
+tseries       = np.zeros((save_len, len(lat), len(lon))) + miss_val # * np.nan    
 
 if monthly:
     threshold    = np.zeros((12, len(lat), len(lon))) + miss_val # * np.nan
@@ -329,22 +285,19 @@ for i in range(len(lat)):
                 metric = drought_metrics(mod_vec=data[:,i,j], lib_path=lib_path, perc=perc, 
                                         monthly=monthly, obs_vec=control_ref[:,i,j],
                                         return_all_tsteps=return_all_tsteps, scale=scale,
-                                        add_metrics=(['rel_intensity', 'threshold', 'rel_intensity_monthly',
-                                        'timing']),
-                                        subset=subset, miss_val=miss_val)
+                                        add_metrics=(['timing', 'rel_intensity', 'intensity', 'threshold']),
+                                        subset=subset)
         
                 ### Write metrics to variables ###
                 duration[range(np.size(metric['duration'])),i,j]   = metric['duration']  #total drought duration (months)
 
                 rel_intensity[range(np.size(metric['rel_intensity'])),i,j] = metric['rel_intensity'] #average magnitude
-
-                rel_intensity_mon[range(np.size(metric['rel_intensity_monthly'])),i,j] = metric['rel_intensity_monthly'] #average magnitude
             
-                #intensity[range(np.size(metric['intensity'])),i,j] = metric['intensity'] #average intensity
+                intensity[range(np.size(metric['intensity'])),i,j] = metric['intensity'] #average intensity
     
                 timing[range(np.size(metric['timing'])),i,j]       = metric['timing']    #drought timing (month index)
 
-                #tseries[range(np.size(metric['tseries'])),i,j]       = metric['tseries']    #drought timing (month index)
+                tseries[range(np.size(metric['tseries'])),i,j]       = metric['tseries']    #drought timing (month index)
 
                 if monthly:
                     threshold[:,i,j] = metric['threshold'][0:12]    #drought timing (month index)
@@ -380,11 +333,9 @@ if monthly:
 #Create data variables
 data_dur  = ncfile.createVariable('duration', 'f8',('time','lat','lon'), fill_value=miss_val)
 data_mag  = ncfile.createVariable('rel_intensity','f8',('time','lat','lon'), fill_value=miss_val)
-data_rel  = ncfile.createVariable('rel_intensity_by_month','f8',('time','lat','lon'), fill_value=miss_val)
-
-#data_int  = ncfile.createVariable('intensity','f8',('time','lat','lon'), fill_value=miss_val)
+data_int  = ncfile.createVariable('intensity','f8',('time','lat','lon'), fill_value=miss_val)
 data_tim  = ncfile.createVariable('timing',   'i4',('time','lat','lon'), fill_value=miss_val)
-#data_ts   = ncfile.createVariable('tseries',   'i4',('time','lat','lon'), fill_value=miss_val)
+data_ts   = ncfile.createVariable('tseries',   'i4',('time','lat','lon'), fill_value=miss_val)
 
 #Create data variable for threshold
 if monthly:
@@ -396,18 +347,16 @@ else:
 #Set variable attributes
 longitude.units = 'degrees_east'
 latitude.units  = 'degrees_north'
-time.units      = 'days since 1960-01-01'
+time.units      = 'days since 1900-01-01'
 
 time.calendar   = 'gregorian'
 
 data_dur.long_name = 'drought event duration (no. months)'
 data_mag.long_name = 'drought event relative intensity (%)'
-data_rel.long_name = 'drought month relative intensity (%)'
-
-#data_int.long_name = 'drought event intensity (mm)'
-data_tim.long_name = 'drought event timing (binary drought/non-drought index)'
+data_int.long_name = 'drought event intensity (mm)'
+data_tim.long_name = 'drought event timing (month index)'
 data_thr.long_name = 'drought threshold (mm)'
-#data_ts.long_name  = 'original time series'
+data_ts.long_name  = 'original time series'
 
 if monthly:
     month[:] = range(1,12+1)
@@ -428,11 +377,9 @@ if monthly:
 #Write data to data variables
 data_dur[:,:,:] = duration    
 data_mag[:,:,:] = rel_intensity
-data_rel[:,:,:] = rel_intensity_mon
-
-#data_int[:,:,:] = intensity
+data_int[:,:,:] = intensity
 data_tim[:,:,:] = timing
-#data_ts[:,:,:]  = tseries
+data_ts[:,:,:]  = tseries
 
 if monthly:    
     data_thr[:,:,:] = threshold
