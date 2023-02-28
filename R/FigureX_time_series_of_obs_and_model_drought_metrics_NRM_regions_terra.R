@@ -1,9 +1,10 @@
-library(raster)
+library(terra)
 library(RColorBrewer)
 library(maptools)
 library(maps)
 library(zoo)
 library(parallel)
+library(future.apply)
 
 #clear R environment
 rm(list=ls(all=TRUE))
@@ -51,7 +52,7 @@ dir.create(outdir)
 ### NRM regions ###
 ###################
 
-nrm_regions <- raster("/g/data/wj02/MISC/NRM_CLUSTERS/NRM_clusters.nc")
+nrm_regions <- rast("/g/data/wj02/MISC/NRM_CLUSTERS/NRM_clusters.nc")
 
 #Set 0 values to NA (used for ocean masking)
 nrm_regions[nrm_regions == 0] <- NA
@@ -96,22 +97,22 @@ for (m in 1:length(metrics)) {
     #########################
     
     
-    obs_data <- brick(paste0(path, "/drought_metrics_AGCD/", scale, "-month/",
+    obs_data <- rast(paste0(path, "/drought_metrics_AGCD/", scale, "-month/",
                              "drought_metrics_AGCD_precip_1900_2021_baseline_1970_2005_scale_",
-                             scale, ".nc"), varname=metrics[m])
+                             scale, ".nc"), subds=metrics[m])
     
     
     
     #Crop to start in 1970
     #netcdf years are wrong so setting indices manually (data runs 1900-2021)
-    obs_data <- obs_data[[841:nlayers(obs_data)]]
+    obs_data <- obs_data[[841:nlyr(obs_data)]]
     
     #Mask obs data (use an AWRA input file for masking for simplicity)
-    mask_data <- raster(paste0(path, "/AWRA_fields/",
+    mask_data <- rast(paste0(path, "/AWRA_fields/",
                                "AWRA_fractional_vegetation_cover_monthly_climatology_1960_2005.nc"))
     
     
-    obs_mask_file <- paste0(outdir_temp_obs, "/obs_masked_", vars[v], ".nc")
+    obs_mask_file <- paste0(outdir_temp_obs, "/obs_masked_", vars[v], "_terra.nc")
     
     if (!file.exists(obs_mask_file)) {
       #(need to first crop AGCD data as slightly larger extent than AWAP runs)
@@ -120,7 +121,7 @@ for (m in 1:length(metrics)) {
       writeRaster(obs_data_masked, obs_mask_file, overwrite=TRUE)
       
     } else {
-      obs_data_masked <- brick(obs_mask_file)
+      obs_data_masked <- rast(obs_mask_file)
     }
     
     
@@ -165,7 +166,7 @@ for (m in 1:length(metrics)) {
                                                             full.names=TRUE, recursive=TRUE))
       
       #Load data
-      bc_data <- lapply(bc_files, function(x) lapply(x, function(f) brick(f, varname=metrics[m])))
+      bc_data <- lapply(bc_files, function(x) lapply(x, function(f) rast(f, subsd=metrics[m])))
       
       
       #Mask precip with NRM regions (precip includes some ocean grid cells that don't get
@@ -174,7 +175,7 @@ for (m in 1:length(metrics)) {
       if (vars[v] == "pr") {
         
         pr_temp_file <- paste0(outdir_temp, "/Masked_temp_", vars[v], "_", 
-                               exp[e], "_", metrics[m], "_scale_", scale, ".rds")
+                               exp[e], "_", metrics[m], "_scale_", scale, "_terra.rds")
         
         
         if (!file.exists(pr_temp_file)) {
@@ -244,7 +245,7 @@ for (m in 1:length(metrics)) {
         #Save output to speed up code
         region_temp_file <- paste0(outdir_temp, "/", nrm_labels[r], "_", 
                                    vars[v], "_", exp[e], "_", metrics[m], 
-                                   "_scale_", scale, ".rds")
+                                   "_scale_", scale, "_terra.rds")
         
         if (!file.exists(region_temp_file)) {
           
@@ -253,8 +254,8 @@ for (m in 1:length(metrics)) {
           #Parallelise
           cl <- makeCluster(getOption('cl.cores', 4))
           
-          clusterExport(cl, c('nrm_regions', 'r', 'areal_mean', 'nlayers'))
-          clusterEvalQ(cl, library(raster))
+          clusterExport(cl, c('nrm_regions', 'r', 'areal_mean_terra'))
+          clusterEvalQ(cl, library(terra))
           
           
           # #Calculate mean for NRM regions (parallelised where loops through years of each dataset)
@@ -304,7 +305,7 @@ for (m in 1:length(metrics)) {
         
         region_temp_file_obs <- paste0(outdir_temp, "/", nrm_labels[r], "_", 
                                        vars[v], "_", exp[e], "_", metrics[m], 
-                                       "_scale_", scale, "_obs.rds")
+                                       "_scale_", scale, "_obs_terra.rds")
         
         if (!file.exists(region_temp_file_obs)) {
           
@@ -312,7 +313,7 @@ for (m in 1:length(metrics)) {
           
           #test=global(obs_data_masked, "mean")
           
-          obs_region_data <- areal_mean(mask(obs_data_masked, nrm_regions,
+          obs_region_data <- areal_mean_terra(mask(obs_data_masked, nrm_regions,
                                              maskvalue=r, updatevalue=NA,
                                              inverse=TRUE))
           

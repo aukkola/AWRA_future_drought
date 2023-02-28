@@ -19,7 +19,7 @@ import xarray as xr
 lib_path  = "/g/data/w97/amu561/Steven_CABLE_runs/scripts/drought_scripts/functions"
 
 ##### ALTERTED #####
-data_path = "/g/data/wj02/COMPLIANT"
+data_path = "/g/data/w97/amu561/Steven_CABLE_runs/"
 #data_path = "/g/data/wj02/AWRA_OUTPUT"
 
 scratch_path = '/scratch/w97/amu561/'
@@ -79,10 +79,9 @@ baseline=[1970,2005]
 ##########################
 
 ### Define file locations ###
-input_variable=['pr']
-output_variable=['qtot','s0']
+output_variable=['Qsb','SoilMoist']
 
-compliant=['QME','CCAM','MRNBC','ISIMIP2b']
+compliant=['MRNBC']
 #non_compliant=['RAW-GCM','NOBC-CCAM']
 
 # Any output data from CCAM has a slightly differenet path

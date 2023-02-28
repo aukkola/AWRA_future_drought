@@ -20,7 +20,7 @@ import xarray as xr
 lib_path  = "/g/data/w97/amu561/Steven_CABLE_runs/scripts/drought_scripts/functions"
 
 ##### ALTERTED #####
-data_path = "/g/data/wj02/COMPLIANT"
+data_path = "/g/data/w97/amu561/Steven_CABLE_runs/"
 #data_path = "/g/data/wj02/AWRA_OUTPUT"
 
 scratch_path = '/scratch/w97/amu561/'
@@ -36,17 +36,12 @@ from drought_metrics import *
 ### DEFINE VARIABLES ###
 ########################
 
-### Bias Correction ###
-bias_corr=str(sys.argv[1])
 
 ### Set Models ###
-model=str(sys.argv[2])
-
-### Set scenarios ###
-scenario=str(sys.argv[3])
+model=str(sys.argv[1])
 
 ### Set variable ###
-variable=str(sys.argv[4])
+variable=str(sys.argv[2])
 
 ### Set drought metric conditions ###
 return_all_tsteps=True
@@ -80,87 +75,91 @@ baseline=[1970,2005]
 ##########################
 
 ### Define file locations ###
-input_variable=['pr']
-output_variable=['qtot','s0']
+#output_variable=['qtot','sm']
 
-compliant=['QME','CCAM','MRNBC','ISIMIP2b']
-#non_compliant=['RAW-GCM','NOBC-CCAM']
-
-# Any output data from CCAM has a slightly differenet path
-ccam_add=""
-if bias_corr=="CCAM":
-    ccam_add="CSIRO-CCAM-r3355-"
-
-awra_add=""
-if variable in output_variable:
-    awra_add='AWRALv6-1-'
-
-if variable in input_variable and bias_corr in compliant:
-    data_path_var= data_path + "/HMINPUT/output/AUS-5/BoM"
-
-if variable in output_variable and bias_corr in compliant:
-    data_path_var= data_path + "/HMOUTPUT/output/AUS-5/BoM"
-
-### Get historical and future simulations ###
-
-#historical
-if bias_corr=="CCAM":
-    files_1_string=str(data_path_var + '/' + awra_add + model + '/historical/r1i1p1/' +
-                       ccam_add + 'r240x120-ISIMIP2b-AWAP/latest/day/' +
-                       variable+ '/*1960*.nc')
-else:
-    files_1_string=str(data_path_var + '/' + awra_add + model +'/historical/r1i1p1/' +
-                       ccam_add + 'r240x120-' + bias_corr + '-AWAP/latest/day/' +
-                       variable + '/*1960*.nc')
-
-#Files to merge                    
-files_to_merge1=glob.glob(files_1_string)
-
-#Future
-if bias_corr=="CCAM":
-    files_2_string=str(data_path_var + '/' + awra_add + model + '/' + scenario + 
-                    '/r1i1p1/' + ccam_add + 'r240x120-ISIMIP2b-AWAP/' + 
-                    'latest/day/' + variable + '/*2006*.nc')
-else:
-    files_2_string=str(data_path_var + '/' + awra_add + model + '/' + scenario + 
-                       '/r1i1p1/' + ccam_add + 'r240x120-' + bias_corr + 
-                       '-AWAP/latest/day/' + variable + '/*2006*.nc')
-
-files_to_merge2=glob.glob(files_2_string)
-
-files_to_merge1.extend(files_to_merge2)
+co2_dir = ["CO2", "noCO2"]
 
 
-### Create temporary directory ###
-temp_dir_path = f"/scratch/w97/amu561/temp/{bias_corr}{model}{scenario}{variable}{str(scale)}"
-os.system("mkdir -p " + temp_dir_path)
-
-os.system("mkdir -p " + scratch_path + "/monthly_sums/")
-
-
-### Location of output file ###
-files= str(scratch_path + "/monthly_sums/" + bias_corr + "_" + 
-           model + "_" + scenario + "_" + variable + ".nc")
-
-
-#Some duplicate time steps, need to skip these when merging
-os.system("export SKIP_SAME_TIME=1")
-
-
-#If output file doesn't alreade exist, create it. Else skip 
-if not os.path.isfile(files):
-
-    for file_ms in range(len(files_to_merge1)):
+#Loop through CO2 options
+for co2 in co2_dir:
     
-        ### Calculate monthly sums ###
-        os.system("cdo monsum " + files_to_merge1[file_ms] + " " + temp_dir_path + "/" + 
-              variable + "_" + str(file_ms) + ".nc")
+    ### Get historical and future simulations ###
 
-    ### Merge the monthly sum data ###
-    os.system("cdo mergetime " + temp_dir_path + "/" + variable + "*.nc " + scratch_path 
-              + "/monthly_sums/"+ bias_corr + "_" + model + "_" + scenario + "_" + variable + ".nc")
+    #historical
+    files_hist_string=str(data_path + '/CABLE_outputs/' + co2 +'_compressed/' + model + 
+                       '/historical/r240x120-MRNBC-AWAP/outputs/' + '/*.nc')
 
 
+    #Files to merge                    
+    files_to_merge=glob.glob(files_hist_string)
+
+    #Future
+    files_fut_string=str(data_path + '/CABLE_outputs/' + co2 +'/' + model + 
+                       '/rcp45/r240x120-MRNBC-AWAP/outputs/' + '/*.nc')
+
+
+    #Combine historical and future file names
+    files_to_merge_fut=glob.glob(files_fut_string)
+
+    files_to_merge.extend(files_to_merge_fut)
+
+
+    ### Create temporary directory ###
+    temp_dir = str(scratch_path + "/monthly_sums_CABLE/")
+    os.system("mkdir -p " + temp_dir)
+
+    ### Location of output file ###
+    out_file= str(temp_dir + "/" + co2 + "_" + 
+               model + "_" + variable + ".nc")
+
+
+
+    #If output file doesn't alreade exist, create it. Else skip 
+    if not os.path.isfile(files):
+        
+        ds = xr.open_mfdataset(files_to_merge)
+
+        if variable == "qtot" :
+            
+            total_q = ds.Qsb + ds.Qs
+
+            #Multiple by the number of days in the month, and number of seconds per day
+            #to convert to mm/month
+            data = total_q * total_q.time.dt.daysinmonth * 86400.0
+
+        
+        else if variable== "sm":
+            
+            sm_all = ds.SoilMoist
+            
+            #Create weights by soil layer
+            
+            #Soil layer depths
+            zse  = np.array([0.022, 0.058, 0.154, 0.409, 1.085, 2.872])
+            weights_vec = zse / sum(zse)
+            
+            #Turn into xarray data array (otherwise xarray not happy)
+            weights=xr.DataArray(weights_vec, dims=['soil'] )
+            weights.name = "weights"
+            
+            #Take the weighted mean over soil layers to get one soil moisture value
+            data = sm_all.weighted(weights).mean(["soil"])
+
+
+        
+        
+        
+        
+
+    data.to_netcdf(out_file, format='NETCDF4', 
+                   encoding={'field':{
+                             'shuffle':True,
+                             'chunksizes':[101, 10],
+                             'zlib':True,
+                             'complevel':5}
+                             })
+            
+            
 
 
 ### Get ss data to add to s0 ###

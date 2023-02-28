@@ -249,13 +249,13 @@ for (m in 1:length(metrics)) {
         if (!file.exists(region_temp_file)) {
           
           
-
-          #Parallelise
-          cl <- makeCluster(getOption('cl.cores', 4))
-
-          clusterExport(cl, c('nrm_regions', 'r', 'areal_mean', 'nlayers'))
-          clusterEvalQ(cl, library(raster))
-
+# 
+#           #Parallelise
+#           cl <- makeCluster(getOption('cl.cores', 4))
+# 
+#           clusterExport(cl, c('nrm_regions', 'r', 'areal_mean', 'nlayers'))
+#           clusterEvalQ(cl, library(raster))
+# 
 
           # #Calculate mean for NRM regions (parallelised where loops through years of each dataset)
           #For some reason this parallelisation doesn't work and ca'nt be bothered to work it out now
