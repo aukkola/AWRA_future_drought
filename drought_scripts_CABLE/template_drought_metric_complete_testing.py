@@ -38,16 +38,16 @@ from drought_metrics import *
 
 
 ### Set Models ###
-model=str(sys.argv[1])
+model="MIROC-MIROC5"
 
 ### Set variable ###
-variable=str(sys.argv[2])
+variable="qtot"
 
 #CO2 directory
-co2 = str(sys.argv[3])
+co2 = "CO2"
 
 #Output file
-out_file=str(sys.argv[4])
+out_file="test.nc" #str(sys.argv[4])
 
 
 ### Set drought metric conditions ###
@@ -227,7 +227,7 @@ subset = range(np.where(ref_years == baseline[0])[0][0],
 ################################
 
 if return_all_tsteps:
-    save_len = len(data)
+    save_len = len(fh_dates)
 else:
     save_len = int(len(data)*(perc/100)*2)
 
@@ -303,7 +303,7 @@ if monthly:
 
 longitude = ncfile.createVariable("lon",  'f8', ('lon',))
 latitude  = ncfile.createVariable("lat",  'f8', ('lat',))
-time      = ncfile.createVariable("time", 'i4', ('time',))
+time      = ncfile.createVariable("time", 'f8', ('time',))
 
 if monthly:
     month = ncfile.createVariable("month", 'i4', ('month',))
@@ -327,9 +327,9 @@ else:
 #Set variable attributes
 longitude.units = 'degrees_east'
 latitude.units  = 'degrees_north'
-time.units      = 'days since 1960-01-01'
+time.units      = fh_time.units
 
-time.calendar   = 'gregorian'
+time.calendar   = fh_time.calendar
 
 data_dur.long_name = 'drought event duration (no. months)'
 data_mag.long_name = 'drought event relative intensity (%)'
@@ -375,6 +375,6 @@ ncfile.close()
 
 
 #Finally compress file
-os.system("nccompress -o " + out_file) 
+#os.system("nccompress -o " + out_file) 
 
 

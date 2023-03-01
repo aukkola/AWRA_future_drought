@@ -303,7 +303,7 @@ if monthly:
 
 longitude = ncfile.createVariable("lon",  'f8', ('lon',))
 latitude  = ncfile.createVariable("lat",  'f8', ('lat',))
-time      = ncfile.createVariable("time", 'i4', ('time',))
+time      = ncfile.createVariable("time", 'f8', ('time',))
 
 if monthly:
     month = ncfile.createVariable("month", 'i4', ('month',))
@@ -327,9 +327,9 @@ else:
 #Set variable attributes
 longitude.units = 'degrees_east'
 latitude.units  = 'degrees_north'
-time.units      = 'days since 1960-01-01'
+time.units      = fh_time.units
 
-time.calendar   = 'gregorian'
+time.calendar   = fh_time.calendar
 
 data_dur.long_name = 'drought event duration (no. months)'
 data_mag.long_name = 'drought event relative intensity (%)'
