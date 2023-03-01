@@ -8,7 +8,7 @@
 #PBS -l ncpus=1
 #PBS -j oe
 #PBS -l wd
-#PBS -l storage=gdata/w97+gdata/oq98
+#PBS -l storage=gdata/w97+gdata/oq98+gdata/hh5
 #PBS -M a.ukkola@unsw.edu.au
 
 module use /g/data3/hh5/public/modules
