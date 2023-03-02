@@ -39,7 +39,7 @@ do
   echo "scale ${s}"
   
   #Find bias correction methods
-  co2_options=`ls "${path}/drought_metrics/${s}-month"`
+  co2_options=`ls "${path}/drought_metrics_CABLE/${s}-month"`
   
   #Loop through bc methods
   for b in $co2_options
@@ -73,8 +73,8 @@ do
                     
           
           #Find data file
-          inpath="${path}/drought_metrics/${s}-month/${b}/${g}/"
-          infile="${inpath}/drought_metrics_${b}_${g}_${v}.nc"
+          inpath="${path}/drought_metrics_CABLE/${s}-month/${b}/${g}/"
+          infile="${inpath}/drought_metrics_CABLE_${b}_${g}_${v}.nc"
   
           
           #Loop through metrics
