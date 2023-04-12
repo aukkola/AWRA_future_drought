@@ -18,7 +18,7 @@ module load conda/analysis3-unstable
 path="/g/data/w97/amu561/Steven_CABLE_runs/CABLE_outputs"
 
 #Experiments
-declare -a experiments=('historical' 'rcp45')
+declare -a experiments=('historical' 'rcp45' 'rcp85')
 
 declare -a co2_dir=('CO2' 'noCO2')
 

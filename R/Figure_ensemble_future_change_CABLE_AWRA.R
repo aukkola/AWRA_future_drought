@@ -108,10 +108,10 @@ for (m in 1:length(metrics)) {
     ### Set up figure ###
     png(paste0(outdir, "/FigureX", "_CABLE_AWRA_ensemble_changes_in_", metrics[m], "_",
                percentile, "_", scale, "_", vars[v], ".png"),
-        height=10.5, width=8.3, units="in", res=400)
+        height=7, width=8.3, units="in", res=400)
     
     
-    par(mai=c(0, 0.1, 0.2, 0.1))
+    par(mai=c(0.1, 0.1, 0.2, 0.1))
     par(omi=c(0.1, 0.3, 0.4, 0.1))
     
     layout(matrix(c(1:3, 4, 4, 4, 5:7, 8, 8, 8), nrow=4, byrow=TRUE), heights=c(1, 0.3, 1, 0.3,
@@ -168,7 +168,7 @@ for (m in 1:length(metrics)) {
       
       #Load data
       data_awra   <- lapply(data_files_awra, brick, varname=metrics[m])
-      data_CO2    <- laply(data_files_CO2, brick, varname=metrics[m])
+      data_CO2    <- lapply(data_files_CO2, brick, varname=metrics[m])
       data_noCO2  <- lapply(data_files_noCO2, brick, varname=metrics[m])
       
       #Calculate historical and future mean
@@ -316,7 +316,7 @@ for (m in 1:length(metrics)) {
       
       
       #Model label
-      mtext(side=3, line=1, font=2, text=labs_mod[p], xpd=NA)
+      mtext(side=3, line=0, font=2, text=labs_mod[p], xpd=NA)
       
       
       if (p==1) mtext(side=2, line=1, text="Ensemble median")
@@ -342,10 +342,10 @@ for (m in 1:length(metrics)) {
 
     plot_data <- list(awra_CO2   = ens_median_awra - ens_median_CO2, #(ens_median_awra - ens_median_CO2) / ens_median_CO2 *100,
                       awra_noCO2 = ens_median_awra - ens_median_noCO2,
-                      CO2_noCO2  = ens_median_CO2 - ens_median_noCO2)
+                      CO2_noCO2  = ens_median_noCO2 - ens_median_CO2)
     
     
-    labs <- c("AWRA - CO2", "AWRA - noCO2", "CO2 - noCO2")
+    labs <- c("AWRA - CO2", "AWRA - noCO2", "noCO2 - CO2")
     
     cols <- colorRampPalette(rev(c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", 
                                "#c7eae5", "#80cdc1", "#35978f", "#01665e")))
@@ -366,7 +366,7 @@ for (m in 1:length(metrics)) {
       
       
       #Model label
-      mtext(side=3, line=1, font=2, text=labs[p], xpd=NA)
+      mtext(side=3, line=0, font=2, text=labs[p], xpd=NA)
       
       
       if (p==1) mtext(side=2, line=1, text="Difference")

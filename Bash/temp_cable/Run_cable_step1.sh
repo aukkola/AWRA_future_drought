@@ -34,12 +34,10 @@ module load R
 #historical run: 
 #walltime=1:50:00
 #mem=15GB
-#6 CPUs
 
 #future run:
 #walltime=3:30:00
 #mem=25GB
-#6 CPUs
 
 #(2 min per year)
 
@@ -51,7 +49,7 @@ module load R
 #CHANGE model, experiment and bc method options here
 
 model="CNRM-CERFACS-CNRM-CM5" #CNRM-CERFACS-CNRM-CM5,  CSIRO-BOM-ACCESS1-0, MIROC-MIROC5, NOAA-GFDL-GFDL-ESM2M
-experiment="historical"   #historical, rcp45, rcp85
+experiment="rcp85"   #historical, rcp45, rcp85
 bc_method="r240x120-MRNBC-AWAP"
 
 #Set base path

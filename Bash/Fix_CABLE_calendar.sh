@@ -20,7 +20,7 @@ module load nco
 path="/g/data/w97/amu561/Steven_CABLE_runs/CABLE_outputs"
 
 #Experiments
-declare -a experiments=('historical' 'rcp45')
+declare -a experiments=('historical' 'rcp45' 'rcp85')
 
 #CO2/noCO2 directory
 declare -a co2_dir=('CO2' 'noCO2')
