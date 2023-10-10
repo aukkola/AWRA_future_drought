@@ -46,7 +46,8 @@ trend_per_pixel_MannKen <- function(data_vec){
     #Data available, perform linear regression
   } else {
     
-    lm <- sens.slope(data_vec)
+
+    lm <- sens.slope(data_vec[!is.na(data_vec)])
     
     #Get slope and p-value
     coef <- lm$estimates

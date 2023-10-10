@@ -1,9 +1,11 @@
-library(raster)
+library(ncdf4)
 library(RColorBrewer)
 library(maptools)
 library(maps)
 library(zoo)
-library(parallel)
+library(raster)
+library(grDevices)
+
 
 #clear R environment
 rm(list=ls(all=TRUE))
@@ -14,7 +16,8 @@ path <- "/g/data/w97/amu561/Steven_CABLE_runs/" #"/srv/ccrc/data04/z3509830/CMIP
 
 
 #Source functions
-source(paste0(path,"/scripts/R/functions/areal_mean.R"))
+source(paste0(path,"/scripts/R/functions/load_ncdf_var.R"))
+source(paste0(path,"/scripts/R/functions/PolygonNA.R"))
 
 
 #Set percentile and scale
@@ -71,17 +74,9 @@ nrm_labels <- c("Central Slopes", "East Coast",
 
 
 #Plotting colours
-bc_cols <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c")
+bc_cols <- c("#33a02c",  "yellow", "#1f78b4", "#6a3d9a")
 
 
-
-
-
-#Save temporary outputs to speed up code
-outdir_temp_obs <- paste0(path, "/temp/")
-
-outdir_temp <- paste0(path, "/temp_NRM/")
-dir.create(outdir_temp)
 
 
 #Loop through metrics
@@ -90,45 +85,12 @@ for (m in 1:length(metrics)) {
   #Loop through variables
   for (v in 1:length(vars)) {
     
-    
-    #########################
-    ### Load observations ###
-    #########################
-    
-    
-    obs_data <- brick(paste0(path, "/drought_metrics_AGCD/", scale, "-month/",
-                            "drought_metrics_AGCD_precip_1900_2021_baseline_1970_2005_scale_",
-                            scale, ".nc"), varname=metrics[m])
-    
-    
-    
-    #Crop to start in 1970
-    #netcdf years are wrong so setting indices manually (data runs 1900-2021)
-    obs_data <- obs_data[[841:nlayers(obs_data)]]
-    
-    #Mask obs data (use an AWRA input file for masking for simplicity)
-    mask_data <- raster(paste0(path, "/AWRA_fields/",
-                               "AWRA_fractional_vegetation_cover_monthly_climatology_1960_2005.nc"))
-    
-    
-    obs_mask_file <- paste0(outdir_temp_obs, "/obs_masked_", vars[v], ".nc")
-    
-    if (!file.exists(obs_mask_file)) {
-      #(need to first crop AGCD data as slightly larger extent than AWAP runs)
-      obs_data_masked <- mask(crop(obs_data, mask_data), mask_data)
-      
-      writeRaster(obs_data_masked, obs_mask_file, overwrite=TRUE)
 
-    } else {
-      obs_data_masked <- brick(obs_mask_file)
-    }
-    
-   
     ### Set up figure ###
     png(paste0(outdir, "/FigureX_NRM_time_series_of_historical_", metrics[m], 
                "_models_and_obs_perc_", percentile, "_scale_", scale, "_", 
                vars[v], ".png"),
-        height=8.5, width=8.3, units="in", res=400)
+        height=9.5, width=8.3, units="in", res=400)
     
     
     par(mai=c(0, 0.1, 0.2, 0.1))
@@ -141,277 +103,178 @@ for (m in 1:length(metrics)) {
     #Loop through experiments
     for (e in 1:length(exp)) {
     
-    
-      # layout(matrix(c(1:4, 5, 6:9, 5, 10:13, 5), nrow=5), heights=c(1, 1, 1, 1, 0.3,
-      #                                                               1, 1, 1, 1,
-      #                                                               1, 1, 1, 1))
-      # #par(mfcol=c(3, 3))
-      # par(bty="n")
       
-    
-      #################
-      ### Load data ###
-      #################
+      # bc_methods <- list.files(paste0(path, "/NRM_means/data/scale_", scale, "/",
+      #                                 metrics[m], "/", exp[e], "/", vars[v]))
+      
+      #GCMs
+      gcms <- list.files(paste0(path, "/NRM_means/data/scale_", scale, "/",
+                                metrics[m], "/", exp[e], "/", vars[v], "/CCAM/"))
       
       
-      #List BC methods
-      bc_methods <- list.files(paste0(path, "/drought_metrics/", scale, "-month"))
       
-      #Find files
-      bc_files <- lapply(bc_methods, function(x) list.files(paste0(path, "/drought_metrics/", 
-                                                                   scale, "-month/", x),
-                                                            pattern=glob2rx(paste0("drought_metrics_*", 
-                                                                                   vars[v], "_", exp[e], "_", scale, ".nc")),
-                                                            full.names=TRUE, recursive=TRUE))
-      
-      #Load data
-      bc_data <- lapply(bc_files, function(x) lapply(x, function(f) brick(f, varname=metrics[m])))
-      
-      
-      #Mask precip with NRM regions (precip includes some ocean grid cells that don't get
-      #masked out if don't do this)
-      
-      if (vars[v] == "pr") {
+      #Loop through regions
+      for (r in nrm_vals) {
         
-        pr_temp_file <- paste0(outdir_temp, "/Masked_temp_", vars[v], "_", 
-                               exp[e], "_", metrics[m], "_scale_", scale, ".rds")
-        
-        
-        if (!file.exists(pr_temp_file)) {
-          
-        #Parallelise
-        cl <- makeCluster(getOption('cl.cores', 4))
-        
-        clusterExport(cl, c('bc_data', 'nrm_regions'))
-        clusterEvalQ(cl, library(raster))  
-      
-        #Mask 
-        bc_data <- parLapply(cl=cl, bc_data, function(x) lapply(x, function(y) mask(y, nrm_regions)))
-        
-        # 
-        # ### Raster ###
-        # library(raster)
-        # bc_data <- lapply(bc_files, function(x) lapply(x, function(f) brick(f, varname=metrics[m])))
-        # #Parallelise
-        # cl <- makeCluster(getOption('cl.cores', 4))
-        # 
-        # clusterExport(cl, c('nrm_regions'))
-        # clusterEvalQ(cl, library(raster))  
-        # 
-        # #Mask 
-        # bc_data <- parLapply(cl=cl, bc_data, function(x) lapply(x, function(y) raster::mask(y, nrm_regions)))
-        # 
-        # 
-        # ### Terra ###
-        # library(terra)
-        # bc_data <- lapply(bc_files, function(x) lapply(x, function(f) rast(f, subds=metrics[m])))
-        # #Parallelise
-        # cl <- makeCluster(getOption('cl.cores', 4))
-        # 
-        # clusterExport(cl, c('nrm_regions'))
-        # clusterEvalQ(cl, library(terra))  
-        # 
-        # #Mask 
-        # bc_data <- parLapply(cl=cl, bc_data, function(x) lapply(x, function(y) terra::mask(y, nrm_regions)))
-        # 
-        # 
-        # 
-
-        #Save
-        saveRDS(bc_data, pr_temp_file)
-        
-        stopCluster(cl)
-        
-        } else {
-          bc_data <- readRDS(pr_temp_file)
-        }
-        
-        
-      }
-      
-      
-      
-      ### Loop through regions ###
-      
-      for (r in 1:length(nrm_vals)) {
-        
-        
-        
-          
         ### Model data ###
+         
+        # bc_files <- lapply(bc_methods, function(x) list.files(paste0(path, "/NRM_means/data/scale_", scale, "/",
+        #                                                              metrics[m], "/", exp[e], "/", vars[v], "/", x),
+        #                                                       recursive=TRUE, full.names=TRUE, pattern=paste0("region", r, ".nc")))
         
-        #calculate areal means
-        #Save output to speed up code
-        region_temp_file <- paste0(outdir_temp, "/", nrm_labels[r], "_", 
-                                   vars[v], "_", exp[e], "_", metrics[m], 
-                                   "_scale_", scale, ".rds")
+        #The "+." in the pattern allows two patterns to be specified (in this case GCM and region number)       
+        gcm_files <- lapply(gcms, function(x) list.files(paste0(path, "/NRM_means/data/scale_", scale, "/",
+                                                                      metrics[m], "/", exp[e], "/", vars[v]),
+                                                               recursive=TRUE, full.names=TRUE, pattern=paste0(x, ".+", "region", r, ".nc")))
+
         
-        if (!file.exists(region_temp_file)) {
-          
-          
-# 
-#           #Parallelise
-#           cl <- makeCluster(getOption('cl.cores', 4))
-# 
-#           clusterExport(cl, c('nrm_regions', 'r', 'areal_mean', 'nlayers'))
-#           clusterEvalQ(cl, library(raster))
-# 
-
-          # #Calculate mean for NRM regions (parallelised where loops through years of each dataset)
-          #For some reason this parallelisation doesn't work and ca'nt be bothered to work it out now
-          # region_data <- parLapply(cl=cl, bc_data, function(bc) lapply(bc, function(gcm) sapply(1:nlyr(gcm), 
-          #                                                                                  function(n) areal_mean_terra(mask(gcm[[n]], nrm_regions,
-          #                                                                                                               maskvalue=r,
-          #                                                                                                               updatevalue=NA,
-          #                                                                                                               inverse=TRUE)))))
-          #   
-          # region_data <- lapply(bc_data, function(bc) lapply(bc, function(gcm) sapply(1:nlyr(gcm), 
-          #                                                       function(n) areal_mean(mask(gcm[[n]], nrm_regions,
-          #                                                                                         maskvalue=r,
-          #                                                                                         updatevalue=NA,
-          #                                                                                         inverse=TRUE)))))
-
-
-
-          #Calculate areal meansmask(test, nrm_regions, maskvalue=NA, updatevalue=NA, inverse=TRUE)
-          # region_data <- parLapply(cl=cl, bc_data, function(bc) lapply(bc, function(gcm) areal_mean(mask(gcm, nrm_regions,
-          #                                                                                                maskvalue=r, updatevalue=NA,
-          #                                                                                                inverse=TRUE))))
-          #Calculate areal meansmask(test, nrm_regions, maskvalue=NA, updatevalue=NA, inverse=TRUE)
-          region_data <- lapply(bc_data, function(bc) lapply(bc, function(gcm) areal_mean(mask(gcm, nrm_regions,
-                                                                                               maskvalue=r, updatevalue=NA,
-                                                                                               inverse=TRUE))))
-
-          #           # This works, but cannot be run from Rstudio
-          # plan(multicore, workers=2)
-          # future_lapply(s_list, FUN = function(x) sapply(1:nlayers(x), terra::global(data[[x]], mean, weights=cellSizes(data[[x]]))))
-          # plan(sequential) # unsets the future cluster
-          # 
-          # 
-          
-          #Save data
-          saveRDS(region_data, region_temp_file)
-          
-          #stopCluster(cl)
-          
-        } else {
-          region_data <- readRDS(region_temp_file)
-        }
-                                            
-          
+        #Check that found the right number of files (should be 4, one for each GCM)
+        #if(any(sapply(bc_files, length) != 4)) stop("wrong number of files")
+        if(any(sapply(gcm_files, length) != 4)) stop("wrong number of model files")
+        
+        
+        model_data <- lapply(gcm_files, function(x) as.data.frame(lapply(x, function(y) load_ncdf_var(y, metrics[m]))))
+        
         
         ### Obs data ###
         
-        region_temp_file_obs <- paste0(outdir_temp, "/", nrm_labels[r], "_", 
-                                   vars[v], "_", exp[e], "_", metrics[m], 
-                                   "_scale_", scale, "_obs.rds")
-        
-        if (!file.exists(region_temp_file_obs)) {
-    
+        #Use AWAP for obs
+        if (vars[v] == "pr") {
           
+          obs_file <- list.files(paste0(path, "/NRM_means/data_obs/scale_", scale, 
+                                        "/", metrics[m], "/", vars[v]),
+                                        pattern=paste0("region", r, ".nc"), full.names=TRUE)
           
-          #test=global(obs_data_masked, "mean")
-          
-          obs_region_data <- areal_mean(mask(obs_data_masked, nrm_regions,
-                                             maskvalue=r, updatevalue=NA,
-                                             inverse=TRUE))
-
-          
-          # obs_region_data <- sapply(1:nlyr(obs_data_masked), function(n)
-          #                           areal_mean_terra(mask(obs_data_masked[[n]], nrm_regions,
-          #                           maskvalue=r, updatevalue=NA, inverse=TRUE)))
-          # 
-          
-          saveRDS(obs_region_data, region_temp_file_obs)
-          
-          
+        #Use AWRA reference runs for runoff/SM
         } else {
-          obs_region_data <- readRDS(region_temp_file_obs)
+          
+          
+        }
+        
+        #Sanity check
+        if (length(obs_file) != 1) stop("wrong number of obs files")
+        
+        obs_data <- load_ncdf_var(obs_file, metrics[m])
+        
+        #Crop precip to start in 1970 to match models (starts 1900)
+        if (vars[v] == "pr") {
+          
+          obs_data <- obs_data[841:length(obs_data)]
         }
         
         
         
         
+        ################
+        ### Plotting ###
+        ################
+      
+        #Rolling mean factor
+        k_fac <- 12*10
+      
+        yrs=1970:2099
+      
         
         
+        ### Model data ###
+         
+        #Calculate ensemble mean and range
+        mean_data <- lapply(model_data, rowMeans) #only calculate mean if all models available
+        max_data  <- lapply(model_data, function(x) apply(x, MARGIN=1, max, na.rm=TRUE))
+        min_data  <- lapply(model_data, function(x) apply(x, MARGIN=1, min, na.rm=TRUE))
+         
+        #Replace Inf values with NA and linearly interpolate NA values (otherwise plotting is hard)
+        mean_data <- lapply(mean_data, function(x) na.approx(replace(x, which(is.infinite(x)), NA), na.rm=FALSE)) 
+        max_data  <- lapply(max_data, function(x) na.approx(replace(x, which(is.infinite(x)), NA), na.rm=FALSE)) 
+        min_data  <- lapply(min_data, function(x) na.approx(replace(x, which(is.infinite(x)), NA), na.rm=FALSE))
+                                                                     
+        #Calculate rolling means
+        mean_data <- lapply(mean_data, function(x) rollapply(x, k_fac, FUN=mean, na.rm=TRUE))
+        max_data  <- lapply(max_data, function(x) rollapply(x, k_fac, FUN=mean, na.rm=TRUE))
+        min_data  <- lapply(min_data, function(x) rollapply(x, k_fac, FUN=mean, na.rm=TRUE))
+         
+         
+        ### Obs data ###
+         
+        obs_region_data <- rollapply(obs_data, k_fac, FUN=mean, na.rm=TRUE)
+         
+           
+        #Work out plot range
+        plot_y_range <- range(c(obs_region_data, unlist(max_data), unlist(min_data)), #unlist(mean_data)), #unlist(max_data), unlist(min_data)),
+                               na.rm=TRUE)
+      
+        x_mod <- 1:length(mean_data[[1]])
+        plot_x_range <- range(x_mod)
         
-      #   ################
-      #   ### Plotting ###
-      #   ################
-      #   
-      #   #Rolling mean factor
-      #   k_fac <- 12*10
-      #   
-      # 
-      #   yrs=1970:2099
-      # 
-      #   #Calculate obs rollmean
-      #   #Add trend line
-      #   x_obs  <- 1:length(obs_region_data)
-      #   lm_obs <- lm(obs_region_data ~ x_obs)
-      # 
-      #   
-      #   #Initialise
-      #   mean_data <- list()
-      #   max_data  <- list()
-      #   min_data  <- list()
-      #   
-      #   #Loop through bc methods
-      #   for (k in 1:length(region_data)) {
-      # 
-      #     mean_data[[k]] <- vector()
-      #     max_data[[k]] <- vector()
-      #     min_data[[k]] <- vector()
-      # 
-      #     #Loop through each time step to calculate ensemble mean and range. Not sure how to do this in lapply/sapply
-      #     for (i in 1:length(region_data[[k]][[1]])) {
-      # 
-      #       mean_data[[k]][i] <- mean(sapply(region_data[[k]], function(x) x[i]), na.rm=TRUE)
-      #       max_data[[k]][i]  <- max(sapply(region_data[[k]], function(x) x[i]), na.rm=TRUE)
-      #       min_data[[k]][i]  <- min(sapply(region_data[[k]], function(x) x[i]), na.rm=TRUE)
-      # 
-      #     }
-      #   }
-      #  
-      #   
-      #   #Work out plot range
-      #   plot_range <- range(c(rollmean(obs_region_data, k=k_fac),
-      #                         unlist(sapply(mean_data, rollmean, k=k_fac))),
-      #                       na.rm=TRUE)
-      #   
-      #   #Plot observations
-      #   
-      #   plot(rollmean(obs_region_data, k=k_fac, fill=NA, na.rm=TRUE), type='l',
-      #        xlim=c(1, length(yrs)*12), ylim=plot_range,
-      #        col="black", lty=1, lwd=2,
-      #        ylab=paste0(metrics[m], " (", unit[m], ")"))
-      #   
-      #   #add NA as predict() ignores NA values produced in mean-vector
-      #   lines(lm_obs$model$x_obs,  predict(lm_obs), col="black", lty=2, lwd=2 )
-      #   
-      #   
-      #   #Loop through bc methods to plot
-      #   for (k in 1:length(region_data)) {
-      #     
-      #     #plot mean and range
-      #     lines(rollmean(mean_data[[k]], k=k_fac, fill=NA, na.rm=TRUE), col=bc_cols[k])
-      # 
-      #     #Calculate and plot trend
-      #     x <- 1:length(mean_data[[k]])
-      #     lm_model <- lm(mean_data[[k]] ~ x)
-      # 
-      #     #add NA as predict() ignores NA values produced in mean-vector
-      #     lines(lm_model$model$x,  predict(lm_model), col=bc_cols[k], lty=2, lwd=2)
-      # 
-      #   }
-      # 
-      #   
-      #   #Add area label
-      #   if (e==1) mtext(side=2, nrm_labels[r], line=3)
-      #   
-      #   #Experiment label
-      #   if(r==1) mtext(side=3, exp[e], line=2)
-      # 
+  
+        ### Plot observations ###
+      
+        #Add trend line
+        x_obs  <- 1:length(obs_region_data)
+        lm_obs <- lm(obs_region_data ~ x_obs)
+        
+        plot(x_obs, obs_region_data, type='l',
+             xlim=plot_x_range, ylim=plot_y_range, xaxt="n",
+             col="black", lty=1, lwd=2,
+             ylab=paste0(metrics[m], " (", unit[m], ")"))
+      
+         
+      
+      
+        ### Plot model data ### 
+        
+        
+        #Loop through GCMs to plot
+        for (k in 1:length(mean_data)) {
+      
+          # #Plot ranges
+          PolygonNA(x_mod, upper=max_data[[k]], lower=min_data[[k]], col=adjustcolor(bc_cols[k], alpha.f=0.3))
+
+# 
+#           if(all(is.na(mean_data[[k]]))) {
+#             print(paste0("exp: ", e, ", model: ", k, ", region: ", r, ", all NA values"))
+#             
+#           } else {
+#             
+#             #plot mean and range
+#             lines(mean_data[[k]], col=bc_cols[k])
+#             
+#             
+#             #lines(rollmean(min_data[[k]], k=k_fac, fill=NA, na.rm=TRUE), col="red")
+#             #lines(rollmean(max_data[[k]], k=k_fac, fill=NA, na.rm=TRUE), col="green")
+#             
+#             
+  
+
+#           }
+#       
+        }
+        
+        
+      #Then loop over models again to aadd trend lines (do this afterwards so they appear on top)
+      for (k in 1:length(mean_data)) {
+        
+        #Calculate and plot trend
+        lm_model <- lm(mean_data[[k]] ~ x_mod)
+        
+        #add NA as predict() ignores NA values produced in mean-vector
+        lines(lm_model$model$x,  predict(lm_model), col=bc_cols[k], lty=1, lwd=2)
+        
+      } 
+      
+      #Plot obs again so on top
+      lines(x_obs, obs_region_data, type='l', col="black", lwd=2)
+      
+      #add NA as predict() ignores NA values produced in mean-vector
+      lines(lm_obs$model$x_obs,  predict(lm_obs), col="black", lty=2, lwd=2 )
+        
+        
+       #Add area label
+       if (e==1) mtext(side=2, nrm_labels[r], line=3)
+    
+       #Experiment label
+       if(r==1) mtext(side=3, exp[e], line=2)
+    
       } #regions
       
     } #experiments

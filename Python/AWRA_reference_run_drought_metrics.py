@@ -11,6 +11,7 @@ import sys
 import os
 import datetime
 import xarray as xr
+import re
 
 #################
 ### Set paths ###
@@ -79,7 +80,6 @@ for v in range(len(variable)):
         
         files = str("/g/data/fj8/BoM/AWRA/DATA/AWRA_REF_FORECAST_HYDROPROJ/" +
                               "awral_orv6qes-viney-icc.2018.1.163/sim/" + variable[v] + "_*.nc")
-                  
         
         ### Merge and then calculate monthly sum data ###
         
@@ -97,20 +97,44 @@ for v in range(len(variable)):
     #Soil moisture              
     elif variable[v] == "sm":
         
-        files_s0 = str("/g/data/fj8/BoM/AWRA/DATA/AWRA_REF_FORECAST_HYDROPROJ/" +
-                                 "awral_orv6qes-viney-icc.2018.1.163/sim/s0_*.nc")
-                                 
-        files_ss = str("/g/data/fj8/BoM/AWRA/DATA/AWRA_REF_FORECAST_HYDROPROJ/" +
-                                 "awral_orv6qes-viney-icc.2018.1.163/sim/ss_*.nc")
+        # files_s0 = str("/g/data/fj8/BoM/AWRA/DATA/AWRA_REF_FORECAST_HYDROPROJ/" +
+        #                          "awral_orv6qes-viney-icc.2018.1.163/sim/s0_*.nc")
+        # 
+        # files_ss = str("/g/data/fj8/BoM/AWRA/DATA/AWRA_REF_FORECAST_HYDROPROJ/" +
+        #                          "awral_orv6qes-viney-icc.2018.1.163/sim/ss_*.nc")
         
+        #Need to use this pattern matching as otherwise finds additional files (e.g. ss_pct_*)
+        #can't find a way to write the number matching more neatly, glob.glob doesn't like the neater version
         
+        #Surface moisture
+        files_s0 = r'/g/data/fj8/BoM/AWRA/DATA/AWRA_REF_FORECAST_HYDROPROJ/' \
+                   r'awral_orv6qes-viney-icc.2018.1.163/sim/s0_[0-9][0-9][0-9][0-9].nc'
+
+        #root zone moisture
+        files_ss = r'/g/data/fj8/BoM/AWRA/DATA/AWRA_REF_FORECAST_HYDROPROJ/' \
+                   r'awral_orv6qes-viney-icc.2018.1.163/sim/ss_[0-9][0-9][0-9][0-9].nc'
+
+
+        files_s0=glob.glob(files_s0)
+
+        files_ss=glob.glob(files_ss)
+
+        #Should find 110 file for each (1911-2020), check
+        if (len(files_s0) != 110 or len(files_ss) != 110):
+            print("wrong number of soil moisture files found")
+            sys.exit(1)  
+        
+        #Need to make one string to pass into cdo
+        merged_files_s0 = " ".join(files_s0)
+        merged_files_ss = " ".join(files_ss)
+
         ### Merge and then calculate monthly sum data ###
         
         #s0 data
         
         temp_s0_file = str(temp_dir_path + "/s0_temp.nc")
         
-        os.system("cdo mergetime " + files_s0 + " " + temp_s0_file)
+        os.system("cdo mergetime " + merged_files_s0 + " " + temp_s0_file)
 
         os.system("cdo monmean -selyear,1960/2020 " + temp_s0_file + " " + temp_dir_path +
                   "/s0.nc")
@@ -120,7 +144,7 @@ for v in range(len(variable)):
         #ss data
         temp_ss_file = str(temp_dir_path + "/ss_temp.nc")
         
-        os.system("cdo mergetime " + files_ss + " " + temp_ss_file)
+        os.system("cdo mergetime " + merged_files_ss + " " + temp_ss_file)
 
         os.system("cdo monmean -selyear,1960/2020 " + temp_ss_file + " " + temp_dir_path +
                   "/ss.nc")
@@ -183,21 +207,11 @@ for v in range(len(variable)):
 
     if not os.path.exists(out_path):    
         os.makedirs(out_path)
-    ##########################################
-    # ##########################################
-    # ##########################################
-    # ##########################################       
+      
     #Create output file name
-    var_name=variable[v]
-
-    out_file = str(out_path + "/drought_metrics_AWRA_ref_" + "_scale_" + str(scale) + "_1960_2020.nc")
+    out_file = str(out_path + "/drought_metrics_AWRA_ref_" + variable[v] + 
+                   "_scale_" + str(scale) + "_1960_2020.nc")
                    
-    ##########################################
-    ##########################################
-    ##########################################
-    ##########################################
-    ##########################################
-
 
     #############################
     ### Find baseline indices ###
