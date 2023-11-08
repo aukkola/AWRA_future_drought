@@ -38,7 +38,7 @@ var_labels <- c("Precipitation", "Runoff", "Soil moisture") #labels for plotting
 
 
 #List metrics
-metrics <- c("duration", "rel_intensity")#, "frequency")
+metrics <- c("duration", "rel_intensity", "frequency")
 
 
 #Experiments
@@ -84,10 +84,10 @@ lims_hist <- list(pr =   list(duration  = c(1, 1.8, 1.9, 2, 2.1, 2.2, 2.3, 2.4, 
 lims_diff <- list(duration      = c(-1000, -3, -2, -1, -0.5, 0, 0.5, 1, 2, 3, 1000),
                   intensity     = c(-10000, -30, -25, -20, -16, -12, -8, -4, -2, 0, 2, 4, 8, 12, 16, 20, 25, 30, 10000),
                   rel_intensity = c(-10000, -8, -6, -4, -2, 0,  2, 4, 6, 8, 10000), #c(-100, -40, -30, -20, -10, 10, 20, 30, 40, 100),
-                  frequency     = c(-100, -5, -4.5, -4, -3.5, -3, -2.5, -2, -1.5,0, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 100))
+                  frequency     = c(-100, -20, -15, -10, -7.5, -5, -2.5, 0, 2.5, 5, 7.5, 10, 15, 20, 100))
 
 
-unit <- c("months", "% points") # (#expression("mm"~"month"^"-1"), expression("no. events 10 yrs"^"-1"))
+unit <- c("months", "% points", "% points") # (#expression("mm"~"month"^"-1"), expression("no. events 10 yrs"^"-1"))
 
 #Level of model agreement for stippling (as fraction of models)
 agr_level <- 0.75
@@ -105,21 +105,34 @@ panel_cex=0.7
 for (m in 1:length(metrics)) {
   
   
+  if (metrics[m] == "frequency") {
+    height= 4
+  } else {
+    height=6.5
+  }
+  
   ### Set up figure ###
   png(paste0(outdir, "/FigureX", "_Mean_changes_in_", metrics[m], "_",
              percentile, "_", scale, ".png"),
-      height=6.5, width=8.3, units="in", res=400)
+      height=height, width=7.3, units="in", res=400)
   
   
-  par(mai=c(0, 0.1, 0.2, 0.1))
+  par(mai=c(0, 0.05, 0.2, 0.0))
   par(omi=c(0.1, 0.3, 0.4, 0.1))
   
-  layout(matrix(c(1:4, 5, 6:9, 5, 10:13, 5), nrow=5), heights=c(1 ,0.3, 1, 1, 0.3,
-                                                                1 ,0.3, 1, 1, 0.3,
-                                                                1 ,0.3, 1, 1, 0.3))
-  #par(mfcol=c(3, 3))
+   #par(mfcol=c(3, 3))
   par(bty="n")
   
+  
+  if (metrics[m] == "frequency") {
+    layout(matrix(c(1:3, 4:5, 3, 6:7, 3), nrow=3), heights=c(1 , 1, 0.3, 
+                                                             1, 1, 0.3,
+                                                             1, 1, 0.3))
+  } else {
+    layout(matrix(c(1:4, 5, 6:9, 5, 10:13, 5), nrow=5), heights=c(1 ,0.3, 1, 1, 0.3,
+                                                                  1 ,0.3, 1, 1, 0.3,
+                                                                  1 ,0.3, 1, 1, 0.3))
+  }
   
 
   #Loop through variables
@@ -181,37 +194,41 @@ for (m in 1:length(metrics)) {
     ### Plotting ###
     ################
     
-    
-    ### Historical median ###
-    
-    plot_col <- cols_hist(length(lims_hist[[vars[v]]][[metrics[m]]])-1)
-    
-    #Plot
-    image(ens_median_hist, breaks=lims_hist[[vars[v]]][[metrics[m]]], 
-          col=plot_col, axes=FALSE, ann=FALSE, asp=1)
-    
-    
-    #Australia outline
-    map(region="Australia", add=TRUE, lwd=0.7) #border="grey50"
-    
-    
-    #Variable label
-    mtext(side=3, line=1, font=2, text=var_labels[v], xpd=NA)
-    
-    
-    #Experiment label   
-    if (v==1) mtext(side=2, line=1, text="Historical")
-    
-    
-    #Empty plot
-    plot(1, type="n", yaxt="n", xaxt="n")
-    
-    #Legend
-    len <- length(lims_hist[[vars[v]]][[metrics[m]]])-1
-    add_raster_legend2(cols=plot_col, limits=lims_hist[[vars[v]]][[metrics[m]]][2:len],
-                       main_title=unit[m], plot_loc=c(0.1,0.9,0.63, 0.77), 
-                       title.cex=1, spt.cex=1, clip=TRUE, ysp_title_old=FALSE)
-    
+    if (metrics[m] != "frequency") {
+      
+      ### Historical median ###
+      
+      plot_col <- cols_hist(length(lims_hist[[vars[v]]][[metrics[m]]])-1)
+      
+      #Plot
+      image(ens_median_hist, breaks=lims_hist[[vars[v]]][[metrics[m]]], 
+            col=plot_col, axes=FALSE, ann=FALSE, asp=1)
+      
+      
+      #Australia outline
+      map(region="Australia", add=TRUE, lwd=0.7) #border="grey50"
+      
+      
+      #Variable label
+      mtext(side=3, line=1, font=2, text=var_labels[v], xpd=NA)
+      
+      
+      #Experiment label   
+      if (v==1) mtext(side=2, line=1, text="Historical")
+      
+      
+      #Empty plot
+      plot(1, type="n", yaxt="n", xaxt="n")
+      
+      #Legend
+      len <- length(lims_hist[[vars[v]]][[metrics[m]]])-1
+      add_raster_legend2(cols=plot_col, limits=lims_hist[[vars[v]]][[metrics[m]]][2:len],
+                         main_title=unit[m], plot_loc=c(0.1,0.9,0.63, 0.77), 
+                         title.cex=1, spt.cex=1, clip=TRUE, ysp_title_old=FALSE)
+      
+      
+      
+    }
     
     ### Future change ###
     
@@ -290,6 +307,8 @@ for (m in 1:length(metrics)) {
       if (v==1) mtext(side=2, line=1, text=exp_labels[p])
       
       
+      #Variable label
+      if (metrics[m] == "frequency" & p==1) mtext(side=3, line=1, font=2, text=var_labels[v], xpd=NA)
       
         
     }

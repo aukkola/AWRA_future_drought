@@ -132,24 +132,37 @@ for v in range(len(variable)):
         
         #s0 data
         
-        temp_s0_file = str(temp_dir_path + "/s0_temp.nc")
+        #If s0 file doesn't exist
+        final_s0_file=str(temp_dir_path + "/s0.nc")
         
-        os.system("cdo mergetime " + merged_files_s0 + " " + temp_s0_file)
+        if not os.path.isfile(final_s0_file):
+        
+            print("Merging s0 files")
+            
+            temp_s0_file = str(temp_dir_path + "/s0_temp.nc")
+            
+            os.system("cdo mergetime " + merged_files_s0 + " " + temp_s0_file)
 
-        os.system("cdo monmean -selyear,1960/2020 " + temp_s0_file + " " + temp_dir_path +
-                  "/s0.nc")
+            os.system("cdo monmean -selyear,1960/2020 " + temp_s0_file + " " + final_s0_file)
 
-        os.system("rm "+ temp_s0_file)
-    
+            os.system("rm "+ temp_s0_file)
+        
         #ss data
-        temp_ss_file = str(temp_dir_path + "/ss_temp.nc")
         
-        os.system("cdo mergetime " + merged_files_ss + " " + temp_ss_file)
+        #If ss file doesn't exist
+        final_ss_file=str(temp_dir_path + "/ss.nc")
+        
+        if not os.path.isfile(final_ss_file):
 
-        os.system("cdo monmean -selyear,1960/2020 " + temp_ss_file + " " + temp_dir_path +
-                  "/ss.nc")
+            print("Merging ss files")
 
-        os.system("rm "+ temp_ss_file)
+            temp_ss_file = str(temp_dir_path + "/ss_temp.nc")
+            
+            os.system("cdo mergetime " + merged_files_ss + " " + temp_ss_file)
+
+            os.system("cdo monmean -selyear,1960/2020 " + temp_ss_file + " " + final_ss_file)
+
+            os.system("rm "+ temp_ss_file)
 
 
     #################
@@ -159,8 +172,8 @@ for v in range(len(variable)):
     #Model data
     if variable[v] == "sm":
 
-        fh        = Dataset(str(temp_dir_path +"/s0.nc"), mode='r')
-        ds_ss     = Dataset(str(temp_dir_path +"/ss.nc"), mode='r')
+        fh        = Dataset(final_s0_file, mode='r')
+        ds_ss     = Dataset(final_ss_file, mode='r')
         s0_data   = fh.variables["s0"][:]
        
         ss_data   = ds_ss.variables["ss"][:]

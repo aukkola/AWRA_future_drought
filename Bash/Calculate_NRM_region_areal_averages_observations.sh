@@ -28,7 +28,6 @@ declare -a metrics=("duration" "rel_intensity" "timing")
 declare -a vars=("pr" "qtot" "sm")
 
 
-
 #9 NRM regions in total (numbered 1-9)
 
 #NRM regions
@@ -67,6 +66,7 @@ do
     cdo -L invertlat -selvar,$m $infile $temp_file
 
     echo "temp_file $temp_file"
+    
     
     cat > Rscript.R << EOF 
     library(raster)

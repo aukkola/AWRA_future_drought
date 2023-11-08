@@ -32,7 +32,7 @@ var_labels <- c("Precipitation", "Runoff", "Soil moisture") #labels for plotting
 
 
 #List metrics
-metrics <- c("duration", "rel_intensity")#, "frequency")
+metrics <- c("frequency") #duration", "rel_intensity", "frequency")
 
 
 #Experiments

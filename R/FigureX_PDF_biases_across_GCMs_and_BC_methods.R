@@ -130,7 +130,7 @@ for (m in 1:length(metrics)) {
     #Load data
     data <- lapply(data_files, brick, varname=metrics[m])
     
-    trend <- parLapply(cl=cl, data, function(x) calc(x, trend_per_pixel_MannKen)) #_MannKen))
+    trend <- parLapply(cl=cl, data, function(x) calc(x, trend_per_pixel)) #_MannKen))
    
     
     # #Calculate mean trend across all simulations

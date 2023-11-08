@@ -30,7 +30,7 @@ var_labels <- c("Precipitation", "Runoff", "Soil moisture") #labels for plotting
 
 
 #List metrics
-metrics <- c("duration", "rel_intensity", "timing")#, "frequency")
+metrics <- c("timing")#, "frequency")
 
 
 #Experiments
@@ -47,15 +47,11 @@ dir.create(outdir)
 ### Plot settings ###
 #####################
 
-
-hist_cols <- colorRampPalette(rev(c("#b2182b", "#d6604d", "#f4a582", "#fddbc7",
-                  "#f7f7f7", "#d1e5f0", "#92c5de", "#4393c3", "#2166ac")))
-
 trend_cols <- colorRampPalette(rev(c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3",
-                "#f5f5f5", "#c7eae5", "#80cdc1", "#35978f", "#01665e")))
-  
-  
-  
+                                              "#f5f5f5", "#c7eae5", "#80cdc1", "#35978f", "#01665e")))
+                                              
+
+
 #drought metric units
 unit <- c(duration="months", rel_intensity="%", timing="%")
 
@@ -81,8 +77,8 @@ breaks_hist <- list(duration=c(minn, seq(-0.5, 0.5, by=0.1), maxx),
                     timing=c(minn, seq(-25, 25, by=5), maxx))
 
 breaks_trend <- list(duration=c(minn, seq(-0.5, 0.5, by=0.1), maxx)/1000,
-                    rel_intensity=c(minn, seq(-25, 25, by=5), maxx)/1000,
-                    timing=c(minn, seq(-25, 25, by=5), maxx)/1000)
+                     rel_intensity=c(minn, seq(-25, 25, by=5), maxx)/1000,
+                     timing=c(minn, seq(-25, 25, by=5), maxx)/1000)
 
 
 ###################
@@ -105,34 +101,30 @@ nrm_labels <- c("Central Slopes", "East Coast",
                 "Wet Tropics")
 
 
-
-
-#Loop through variables
-for (v in 1:length(vars)) {
+#Loop through metrics
+for (m in 1:length(metrics)) {
   
-  #Loop through metrics
-  for (m in 1:length(metrics)) {
 
-    ### Set up figure ###
-    png(paste0(outdir, "/FigureX", "_matrix_NRM_regions_of_gmcs_and_bc_methods_in_", vars[v], "_", 
-               metrics[m], "_", percentile, "_", scale, "_", exp, ".png"),
-        height=9.5, width=8.3, units="in", res=400)
+  ### Set up figure ###
+  png(paste0(outdir, "/FigureX", "_matrix_NRM_regions_of_gmcs_and_bc_methods_in_all_vars_", 
+             metrics[m], "_", percentile, "_", scale, "_", exp, ".png"),
+      height=13.5, width=8.3, units="in", res=400)
+  
+  
+  par(mai=c(0.6, 0.2, 0.2, 0.2))
+  par(omi=c(0.1, 1.2, 0.4, 0.3))
+  
+  layout(matrix(c(1:6, 7, 7), ncol=2, byrow=TRUE), heights=c(1,1,1,0.3))
+  
+  
+  #Loop through variables
+  for (v in 1:length(vars)) {
     
-    
-    par(mai=c(0.6, 0.2, 0.2, 0.2))
-    par(omi=c(0.1, 1.2, 0.4, 0.3))
-    
-    layout(matrix(c(1,2, 3, 3, 4, 5, 6, 6), ncol=2, byrow=TRUE), heights=c(1,0.3,1,0.3))
-    
-
-    #Set up matrix to collate data (4 GCMs or 4 BC methods)
-    hist_gcm_matrix  <- matrix(nrow=length(nrm_vals), ncol=4)
-    hist_bc_matrix   <- matrix(nrow=length(nrm_vals), ncol=4)
-
     trend_gcm_matrix <- matrix(nrow=length(nrm_vals), ncol=4)
     trend_bc_matrix  <- matrix(nrow=length(nrm_vals), ncol=4)
     
-    
+    pval_gcm_matrix <- matrix(nrow=length(nrm_vals), ncol=4)
+    pval_bc_matrix  <- matrix(nrow=length(nrm_vals), ncol=4)
     
     
     #Loop through regions
@@ -164,13 +156,13 @@ for (v in 1:length(vars)) {
       if(vars[v] == "pr") {
         #Calculate obs mean
         obs_mean <- mean(obs_data[841:1452], na.rm=TRUE)
-
+        
       } else {
-      #Calculate obs mean
-      obs_mean <- mean(obs_data[hist_ind], na.rm=TRUE)
-
+        #Calculate obs mean
+        obs_mean <- mean(obs_data[hist_ind], na.rm=TRUE)
+        
       }
-
+      
       
       
       
@@ -209,11 +201,13 @@ for (v in 1:length(vars)) {
       
       #Calculate model historical means
       model_mean <- lapply(data, function(x) mean(x[hist_ind], na.rm=TRUE))
-    
-        
-      #Calculate model trend (using 1970-2099)
-      model_trend <- lapply(data, function(x) trend_per_pixel(x[hist_ind[1]:length(x)])[1])
       
+      
+      #Calculate model trend (using 1970-2099)
+      model_lm <- lapply(data, function(x) trend_per_pixel(x[hist_ind[1]:length(x)]))
+      
+      model_trend <- lapply(model_lm, function(x) x[1])
+      model_pval  <- lapply(model_lm, function(x) x[3])
       
       ####################
       ### Group by GCM ###
@@ -222,20 +216,19 @@ for (v in 1:length(vars)) {
       #Find indices for each GCM
       gcm_ind <- lapply(gcms, function(x) which(grepl(x, data_files)))
       
-      #Calculate the mean of GCM means, then take the difference from obs
       #Calculating the mean for each model run separarely first, I think this is the best way to do it.
       #Other option would be to lump all the GCM time series together and then take the mean. But because
       #some model runs will have more/less drought events than others, I think this could bias results
-      gcm_bias <- lapply(gcm_ind, function(x) mean(unlist(model_mean[x]), na.rm=TRUE) - obs_mean)
-      
       #Again need to take trends individually, then average. I think this is ok? can't really lump together
       #and then take trend
       gcm_trend <- lapply(gcm_ind, function(x) mean(unlist(model_trend[x])))
       
+      gcm_pval <- lapply(gcm_ind, function(x) length(which(unlist(model_pval[x]) <= 0.05)))
+      
       
       #Add to plotting matrices
-      hist_gcm_matrix[r,]  <- unlist(gcm_bias)
       trend_gcm_matrix[r,] <- unlist(gcm_trend)
+      pval_gcm_matrix[r,]  <- unlist(gcm_pval)
       
       
       ###################
@@ -245,72 +238,38 @@ for (v in 1:length(vars)) {
       #Find indices for each GCM
       bc_ind <- lapply(bc_methods, function(x) which(grepl(x, data_files)))
       
-      #historical bias
-      bc_bias <- lapply(bc_ind, function(x) mean(unlist(model_mean[x]), na.rm=TRUE) - obs_mean)
-      
       #trend
       bc_trend <- lapply(bc_ind, function(x) mean(unlist(model_trend[x])))
+      bc_pval  <- lapply(bc_ind, function(x) length(which(unlist(model_pval[x]) <= 0.05)))
       
       #Add to plotting matrices
-      hist_bc_matrix[r,]  <- unlist(bc_bias)
       trend_bc_matrix[r,] <- unlist(bc_trend)
+      pval_bc_matrix[r,]  <- unlist(bc_pval)
       
     }
     
     
     
-    
-    
+  
     ################
     ### Plotting ###
     ################
     
-    ### GCM and BC bias (top row, two panels) ###
+ 
+    ### GCM and BC trend (two panels) ###
     
-    plot_data <- list(hist_gcm_matrix, hist_bc_matrix)
-    
-    plot_labs <- list(as.vector(gcm_labels), bc_methods)
-    
-    breaks <- breaks_hist[[metrics[m]]]
-    
-    main_title <- c("GCM", "BC method")  
-    
-    for (p in 1:length(plot_data)) {
-      
-      #matrix plot
-      image(t(plot_data[[p]]), breaks=breaks, col=hist_cols(length(breaks)-1), xaxt="n",
-            yaxt="n")
-      
-      #x-axis
-      axis(side=1, labels=plot_labs[[p]], las=2, 
-           at=seq(0,1, length.out=length(plot_labs[[p]])))
-      
-      #y-axis
-      if(p==1) axis(side=2, labels=nrm_labels, las=2,
-             at=seq(0,1, length.out=length(nrm_labels)))
-        
-      mtext(side=3, main_title[p], line=1, cex=1.2)
-      
-    
-    }
-    
-    
-    ### Legend ###
-    
-    plot(1, type="n", xaxt="n", yaxt="n", bty="n") #empty plot
-    add_raster_legend2(hist_cols(length(breaks)-1), breaks[2:(length(breaks)-1)],
-                       plot_loc=c(0.2,0.8,-0.35,-0.05), main_title=paste0("Bias (", unit[metrics[m]], ")"),
-                       spt.cex=1.5)
-    
-    
-    
-    ### GCM and BC trend (bottom row, two panels) ###
-    
+    #Collate
     plot_data <- list(trend_gcm_matrix, trend_bc_matrix)
     
+    plot_pvals <- list(pval_gcm_matrix, pval_bc_matrix)
+    
     plot_labs <- list(as.vector(gcm_labels), bc_methods)
     
+    #Get breaks
     breaks <- breaks_trend[[metrics[m]]]
+    
+    #Main title
+    main_title <- c("GCM", "BC method")  
     
     
     for (p in 1:length(plot_data)) {
@@ -327,20 +286,54 @@ for (v in 1:length(vars)) {
       if(p==1) axis(side=2, labels=nrm_labels, las=2,
                     at=seq(0,1, length.out=length(nrm_labels)))
       
+      if(v==1) mtext(side=3, main_title[p], line=1, cex=1.2)
+      
+      
+      #Add hatching if at least 2 models are not significant
+      #(i.e. don't hatch if at least 3 models are significant)
+      
+      #Hacky, can't figure out a better way to do this
+      
+      #x and one middle coordinates
+      x = seq(1,0, length.out=length(plot_labs[[p]]))
+      y = seq(1,0, length.out=length(nrm_labels))        
+      
+      #interval
+      int_x <- (x[2]-x[1])/2
+      int_y <- (y[2]-y[1])/2
+      
+      for (i in 1:nrow(plot_pvals[[p]])) {
+        for(j in 1:ncol(plot_pvals[[p]])) {
+          
+          if (plot_pvals[[p]][i,j] <3 ) {
+            
+            polygon(c(x[j]-int_x, rep(x[j]+int_x, 2),x[j]-int_x),
+                    c(rep(y[i]+int_y, 2), rep(y[i]-int_y, 2)),
+                    add=TRUE, density=5, border=NA)
+            
+          }
+        }
+      }
+
+      
+      
+
     }
     
     ### Legend ###
     
-    plot(1, type="n", xaxt="n", yaxt="n", bty="n") #empty plot
-    add_raster_legend2(trend_cols(length(breaks)-1), breaks[2:(length(breaks)-1)],
-                       plot_loc=c(0.2,0.8,-0.35,-0.05), main_title=paste0("Trend (", unit[metrics[m]], ")"),
-                       spt.cex=1.5, xpd=NA)
+    if (v==3) {
+      
+      plot(1, type="n", xaxt="n", yaxt="n", bty="n") #empty plot
+      add_raster_legend2(trend_cols(length(breaks)-1), breaks[2:(length(breaks)-1)],
+                         plot_loc=c(0.2,0.8,-0.35,-0.05), main_title=paste0("Trend (", unit[metrics[m]], ")"),
+                         spt.cex=1.5, xpd=NA)
+    }
     
-    dev.off ()
-    
-    } #metrics
-  
-} #variables
+     
+  }#variables
+  dev.off ()
+} #metrics
 
 
 
@@ -348,47 +341,3 @@ for (v in 1:length(vars)) {
 
 
 
-
-
-
-
-
-
-# 
-# ### GCM and BC trend ###
-# 
-# gg_trend <- list()
-# 
-# plot_data_trend <- list(trend_gcm_matrix, trend_bc_matrix)
-# 
-# 
-# for (p in 1:length(plot_data_trend)) {
-#   
-#   #Create data frame
-#   df        <- reshape2::melt(plot_data_trend[[p]], c("region", "gcm_bc"), value.name = "bias")
-#   df$region <- as.factor(df$region)
-#   df$gcm_bc <- as.factor(df$gcm_bc)
-#   
-#   
-#   gg_trend[[p]] <- ggplot(df, aes(x=gcm_bc,y=region)) + 
-#     geom_raster(aes(fill=bias)) + 
-#     scale_fill_gradient2(midpoint=0, low=hist_cols[1], 
-#                          mid=hist_cols[2], high=hist_cols[3]) +      
-#     scale_x_discrete(breaks=1:length(gcm_labels), labels=plot_labs[[p]]) +
-#     scale_y_discrete(breaks=1:length(nrm_labels) ,labels=nrm_labels) +
-#     labs(x ="", y ="") + theme(axis.text.x = element_text(angle = 90)) +
-#     theme_minimal()
-#   
-#   if(p==1) gg_trend[[p]] + theme(legend.position = "none")
-#   
-# }
-# 
-# 
-# 
-# 
-# 
-# ggarrange(gg_hist[[1]], gg_hist[[2]], common_legend=TRUE)
-# 
-# gg_trend[[1]], gg_trend[[2]],
-# nrow=2, ncol=2)
-# 

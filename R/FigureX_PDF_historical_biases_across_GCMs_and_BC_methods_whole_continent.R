@@ -29,6 +29,8 @@ var_labels <- c("Precipitation", "Runoff", "Soil moisture") #labels for plotting
 #List metrics
 metrics <- c("duration", "rel_intensity")#, "frequency")
 
+metric_labels <- c("Duration (months)", "Relative intensity (%)")#, "frequency") #labels for plotting
+
 
 #Experiments
 exp <- c("rcp45")#, "rcp85")
@@ -40,33 +42,14 @@ outdir <- paste0(path, "/Figures")
 dir.create(outdir)
 
 
-###################
-### NRM regions ###
-###################
-
-nrm_regions <- raster("/g/data/wj02/MISC/NRM_CLUSTERS/NRM_clusters.nc")
-
-#Set 0 values to NA (used for ocean masking)
-nrm_regions[nrm_regions == 0] <- NA
-
-#Get region values for extracting later
-nrm_vals <- sort(unique(values(nrm_regions)))
-nrm_vals <- nrm_vals[which(!is.na(nrm_vals))]
-
-nrm_labels <- c("Central Slopes", "East Coast", 
-                "Murray Basin", "Monsoonal North",
-                "Rangelands", "Southern Slopes",
-                "Southern and South-Western Flatlands",
-                "Wet Tropics")
-
-
 
 #####################
 ### Plot settings ###
 #####################
 
 
-cols <- c("#e41a1c", "#377eb8", "#984ea3", "#ff7f00")
+cols <- c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3")
+#c("#e41a1c", "#377eb8", "#984ea3", "#ff7f00")
 #("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c")
 
 
@@ -92,21 +75,21 @@ gcm_labels <- c(CNRM  = "CNRM-CM5",
                 NOAA  = "GFDL-ESM2M")
 
 
-x_range <- list(duration=list(pr=c(1,4),
-                              qtot=c(1,6),
-                              sm=c(1,6)),
+x_range <- list(duration=list(pr=c(1,3.5) + scale-1,
+                              qtot=c(1,5)+ scale-1,
+                              sm=c(1,6)+ scale-1),
                 rel_intensity=list(pr=c(10,90),
                                    qtot=c(10,90),
                                    sm=c(10,90)))
 
 #Set up parallel processing for trend calculation
-cl <- makeCluster(getOption('cl.cores', 16))
+#cl <- makeCluster(getOption('cl.cores', 28))
 
-clusterEvalQ(cl, library(raster))
-
+#clusterEvalQ(cl, library(raster))
+beginCluster(28)
 
 #Plot GCM and BC in separate plot
-plot_type <- c("GCM", "BC")
+#plot_type <- c("GCM", "BC")
 
 
 #Loop through metrics
@@ -115,19 +98,19 @@ for (m in 1:length(metrics)) {
   
   #Progress
   print(paste0("plotting metric ", m, "/", length(metrics)))
-
-  #Plot type (GCM/BC)  
-  for (p in 1:length(plot_type)) {
   
-
+  # #Plot type (GCM/BC)  
+  # for (p in 1:length(plot_type)) {
+  #   
+    
     ### Set up figure ###
-    png(paste0(outdir, "/FigureX", "_historical_PDFs_of_", plot_type[p], "_in_", metrics[m], "_",
-               percentile, "_", scale, "_", exp, "_by_NRM_region.png"),
-        height=9.5, width=6.3, units="in", res=400)
+    png(paste0(outdir, "/FigureX", "_historical_PDFs_in_", metrics[m], "_",
+               percentile, "_", scale, "_", exp, "_whole_continent.png"),
+        height=9.5, width=7.3, units="in", res=400)
     
     
-    par(mai=c(0, 0.1, 0.2, 0.1))
-    par(omi=c(0.1, 0.4, 0.4, 0.3))
+    par(mai=c(0.3, 0.1, 0.2, 0.1))
+    par(omi=c(0.5, 1.0, 0.4, 0.3))
     
     par(mfrow=c(length(vars), 2))
     
@@ -163,14 +146,15 @@ for (m in 1:length(metrics)) {
                            "drought_metrics_AWRA_ref_", vars[v], "_scale_", scale, "_1960_2020.nc")
         
         #Select 1970-2020
-        obs_data <- brick(obs_file, varname=metrics[m])[[121:nlayers(obs_data)]]
+        obs_data <- brick(obs_file, varname=metrics[m])
+        obs_data <- obs_data[[121:nlayers(obs_data)]]
       }
       
       #Calculate obs mean
-      obs_mean <- mean(obs_data, na.rm=TRUE)
+      obs_mean <- clusterR(obs_data, mean, args=list(na.rm=TRUE))
       
       
-      
+       
       ##################
       ### Model data ###
       ##################
@@ -195,26 +179,28 @@ for (m in 1:length(metrics)) {
       
       
       #Load data
-      #Only get data for 1970- to match observations
-      data <- lapply(data_files, function(x) brick(x, varname=metrics[m]))
+      #Only get data for 1970-2020 to match observations (model data runs 1960-2099)
+      data <- lapply(data_files, function(x) brick(x, varname=metrics[m])[[121:732]])
       
-      
+      start=Sys.time()
       #Calculate model means
-      model_mean <- parLapply(cl, data, mean, na.rm=TRUE)
+      model_mean <- lapply(data, function(x) clusterR(x, mean, args=list(na.rm=TRUE))) #parLapply(cl, data, mean, na.rm=TRUE)
+      end=Sys.time()
+      print(paste("time: ", end-start))
       
       
-      #Mask obs with models (obs includes ocean areas)
+      #Mask rainfall obs with models (obs includes ocean areas)
       if (vars[v]=="pr") {
-        
-        pr_processed_file <- "/scratch/w97/amu561/temp_pr.nc"
-        
-        if (!file.exists(pr_processed_file)) {
-          obs_mean <- mask(crop(obs_mean, model_mean[[1]]),  model_mean[[1]])
-          writeRaster(obs_mean, pr_processed_file, varname=metrics[m], overwrite=TRUE)
-        } else {
-          obs_mean <- raster(pr_processed_file)
-        }
+        obs_mean <- mask(crop(obs_mean, model_mean[[1]]),  model_mean[[1]])
       } 
+      
+      
+      #Need to add scale-1 to duration so numbers reflect the scale
+      #e.g. a one-month drought for scale=3 should be 3 months
+      if (metrics[m] == "duration") {
+        obs_mean <- obs_mean + (scale-1)
+        model_mean <- lapply(model_mean, function(x) x + (scale-1))
+      }
       
       
       ################
@@ -232,7 +218,16 @@ for (m in 1:length(metrics)) {
       #Set bins for frequency calculation
       nbins <- 50
       
-      data_range <- range(obs_vals, unlist(mod_vals), na.rm=TRUE)
+      if(metrics[m] == "duration") {
+        
+        data_range <- c(1,6) #range(obs_vals, unlist(mod_vals), na.rm=TRUE)
+      } else if (metrics[m] == "rel_intensity") {
+        data_range <- c(0,100) #range(obs_vals, unlist(mod_vals), na.rm=TRUE)
+      } else {
+        data_range <- range(obs_vals, unlist(mod_vals), na.rm=TRUE)
+      }
+      
+      data_range <- x_range[[metrics[m]]][[vars[v]]]
       
       breaks <- seq(data_range[1], data_range[2], length.out=nbins)
       
@@ -257,23 +252,31 @@ for (m in 1:length(metrics)) {
       # 
       # 
       
-      #######################
-      ### Plot PDF by GCM ###
-      #######################
       
+      #############################
+      ### Calculate frequencies ###
+      #############################
+      
+      #GCM
       gcm_ind <- lapply(gcms, function(x) which(grepl(x, data_files)))
       
       gcm_freqs <- lapply(gcm_ind, function(x) freqs(unlist(mod_vals[x]), breaks, rep(area, length(x))))
       
+      #BC
+      bc_ind <- lapply(bc_methods, function(x) which(grepl(x, data_files)))
+      
+      bc_freqs <- lapply(bc_ind, function(x) freqs(unlist(mod_vals[x]), breaks, rep(area, length(x))))
+      
       
       #Get plot ranges
-      plot_y_range <- range(unlist(gcm_freqs), obs_freqs, na.rm=TRUE)
+      plot_y_range <- range(unlist(gcm_freqs), bc_freqs, obs_freqs, na.rm=TRUE)
+      plot_x_range <- x_range[[metrics[m]]][[vars[v]]] 
       
-      #x-range has some crazy values from the percentage calculation, ignore these
-      #by taking x-range as the 10/90th percentile
-      plot_x_range <- x_range[[metrics[m]]][[vars[v]]] #c(1, scale+3) #range(breaks) #quantile(unlist(lapply(hist_gcm, function(x) x$x)), 
-      #probs=c(0.1, 0.9), na.rm=TRUE)
       
+      #######################
+      ### Plot PDF by GCM ###
+      #######################
+    
       
       #Plotting
       plot(plot_x_range, plot_y_range, type="n", ylab="n", xlab="n")
@@ -298,16 +301,30 @@ for (m in 1:length(metrics)) {
         
       }
       
-      mtext(side=2, line=2, var_labels[v])
+      #Variable label
+      mtext(side=2, line=5, cex=1.2, var_labels[v])
       
+      #y-label
+      mtext(side=2, line=2.5, "Fraction of land area (-)")
+      
+      #x-label
+      if(v==3) {
+        mtext(side=1, line=2.5, metric_labels[m])
+      }
       
       
       #Add legend with skill scores
       perkins_gcm <- sapply(gcm_freqs, function(x) perkins_skill_score(x, obs_freqs))
       mbe_gcm     <- sapply(gcm_ind, function(x) mean(unlist(mod_vals[x]), na.rm=TRUE) - mean(obs_vals, na.rm=TRUE))
       
+      #Need to place legend in a different spot depending on variable/metric
+      position <- "topright"
       
-      legend("topright", legend=paste0(gcm_labels, " (s=", round(perkins_gcm, digits=2), ", MBE=", 
+      if (metrics[m] == "rel_intensity" & vars[v] %in% c("pr", "qtot")) {
+        position <- "topleft"
+      } 
+      
+      legend(position, legend=paste0(gcm_labels, " (s=", round(perkins_gcm, digits=2), ", MBE=", 
                                        round(mbe_gcm, digits=2), ")"), col=cols, bty="n", lty=1, cex=0.8)
       
       
@@ -315,14 +332,7 @@ for (m in 1:length(metrics)) {
       ### Plot PDF by BC method ###
       #############################
       
-      bc_ind <- lapply(bc_methods, function(x) which(grepl(x, data_files)))
-      
-      #Calculate densities
-      bc_freqs <- lapply(bc_ind, function(x) freqs(unlist(mod_vals[x]), breaks, rep(area, length(x))))
-      
-      #Get plot ranges
-      plot_y_range <- range(unlist(bc_freqs), obs_freqs, na.rm=TRUE)
-      
+        
       #x-range has some crazy values from the percentage calculation, ignore these
       #by taking x-range as the 10/90th percentile
       #plot_x_range <- range(breaks) #quantile(unlist(lapply(hist_bc, function(x) x$x)), 
@@ -330,7 +340,7 @@ for (m in 1:length(metrics)) {
       
       
       #Plotting
-      plot(plot_x_range, plot_y_range, type="n", ylab="n", xlab="n")
+      plot(plot_x_range, plot_y_range, type="n", ylab="n", xlab="n", yaxt="n")
       
       #Add obs line
       lines(x_centred, obs_freqs, col="black", lwd=1)
@@ -342,28 +352,31 @@ for (m in 1:length(metrics)) {
         lines(x_centred, bc_freqs[[bc]], col=cols[bc])
       }
       
+      #Main title
       if(v==1) {
-        mtext(side=3, line=1, "BC method")
+        mtext(side=3, line=1, cex=1.2, "BC method")
       }
       
-      
+      #x-label
+      if(v==3) {
+        mtext(side=1, line=2.5, metric_labels[m])
+      }
       
       #Add legend with skill scores
       perkins_bc <- sapply(bc_freqs, function(x) perkins_skill_score(x, obs_freqs))
       mbe_bc     <- sapply(bc_ind, function(x) mean(unlist(mod_vals[x]), na.rm=TRUE) - mean(obs_vals, na.rm=TRUE))
-      
-      
-      legend("topright", legend=paste0(bc_methods, " (s=", round(perkins_bc, digits=2), ", MBE=", 
+    
+      legend(position, legend=paste0(bc_methods, " (s=", round(perkins_bc, digits=2), ", MBE=", 
                                        round(mbe_bc, digits=2), ")"), col=cols, bty="n", lty=1, cex=0.8)
       
       
     } #variables
     
     dev.off()
-  } #GCM/BC
+  # } #GCM/BC
 } #metrics
 
-
+endCluster()
 
 #stopCluster(cl) #need to put this here, otherwise temporary .grd files craeted by parallel code become unavailable
 

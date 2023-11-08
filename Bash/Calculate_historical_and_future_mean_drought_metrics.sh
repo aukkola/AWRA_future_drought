@@ -29,7 +29,7 @@ declare -a exp=("historical" "rcp45" "rcp85")
 declare -a vars=("pr" "qtot" "sm")
 
 #Set metrics
-declare -a metrics=("duration" "rel_intensity")
+declare -a metrics=("duration" "rel_intensity" "frequency")
 
 
 #Loop through scales
@@ -87,8 +87,21 @@ do
             outfile="${outdir}/Mean_${m}_${v}_${b}_${g}_${e}_${start_yr}_${end_yr}_scale_${s}.nc"
             
             if [ ! -f ${outfile} ]; then
-              #Select metric and time period and calculate mean
-              cdo -L timmean -selyear,$start_yr/$end_yr -selvar,$m $infile $outfile 
+              
+              if [ $m = "frequency" ]; then
+                
+                no_yrs="$(($end_yr-$start_yr+1))"
+                
+                #Select metric and time period and calculate fraction of time under drought
+                #sum timing (i.e. binary 0/1 drought/no-drought), then multiply the number
+                #of years and months and finally convert from fraction to percentage by multiplying by 100
+                cdo -L expr,"timing=timing/($no_yrs*12)*100" -timsum -selyear,$start_yr/$end_yr -selvar,timing $infile $outfile 
+          
+              else
+                #Select metric and time period and calculate mean
+                cdo -L timmean -selyear,$start_yr/$end_yr -selvar,$m $infile $outfile 
+            
+              fi
           
             fi
           
