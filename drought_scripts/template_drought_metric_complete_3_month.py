@@ -79,7 +79,8 @@ baseline=[1970,2005]
 ##########################
 
 ### Define file locations ###
-output_variable=['Qsb','SoilMoist']
+output_variable=['qtot', 'sm'] #['Qsb','SoilMoist']
+input_variable=['pr']
 
 compliant=['MRNBC']
 #non_compliant=['RAW-GCM','NOBC-CCAM']
@@ -130,20 +131,32 @@ files_to_merge1.extend(files_to_merge2)
 
 
 ### Create temporary directory ###
+
+#daily temporary file
 temp_dir_path = f"/scratch/w97/amu561/temp/{bias_corr}{model}{scenario}{variable}{str(scale)}"
 os.system("mkdir -p " + temp_dir_path)
 
-os.system("mkdir -p " + scratch_path + "/monthly_sums/")
+#monthly temporary file
+mon_temp_path = str(scratch_path + "/monthly_sums_AWRA_GCM/")
+os.system("mkdir -p " + mon_temp_path)
 
 
 ### Location of output file ###
-files= str(scratch_path + "/monthly_sums/" + bias_corr + "_" + 
+files= str(mon_temp_path + "/" + bias_corr + "_" + 
            model + "_" + scenario + "_" + variable + ".nc")
 
 
 #Some duplicate time steps, need to skip these when merging
 os.system("export SKIP_SAME_TIME=1")
 
+#The code should be rewritten, it's a bit messy. But in the meantime,
+#need to define averaging method separately for soil moisture (as need to take
+#monthly mean rather than sum)
+if variable == "s0":
+    fun="monmean"
+else: 
+    fun="monsum"
+    
 
 #If output file doesn't alreade exist, create it. Else skip 
 if not os.path.isfile(files):
@@ -151,7 +164,7 @@ if not os.path.isfile(files):
     for file_ms in range(len(files_to_merge1)):
     
         ### Calculate monthly sums ###
-        os.system("cdo monsum " + files_to_merge1[file_ms] + " " + temp_dir_path + "/" + 
+        os.system("cdo " + fun + " " + files_to_merge1[file_ms] + " " + temp_dir_path + "/" + 
               variable + "_" + str(file_ms) + ".nc")
 
     ### Merge the monthly sum data ###
@@ -192,7 +205,7 @@ if variable=="s0":
         for file_ms in range(len(xtr1_files_to_merge)):
 
             ### Calculate monthly sums ###
-            os.system("cdo monsum " + xtr1_files_to_merge[file_ms] + " " + temp_dir_path +
+            os.system("cdo " + fun + " " + xtr1_files_to_merge[file_ms] + " " + temp_dir_path +
                       "/ss_" + str(file_ms) + ".nc")
 
         ### Merge monthly sum files ###
@@ -262,7 +275,8 @@ if not os.path.exists(out_path):
 # ##########################################
 # ##########################################
 # ##########################################       
-#Create output file name
+#Create output file name (should rewrite code to avoid having to change
+#varname here)
 if variable=='s0':
     var_name='sm'
 else:
@@ -270,12 +284,6 @@ else:
 out_file = str(out_path + "/drought_metrics_" + bias_corr + "_" + model + "_" + 
                var_name + "_" + scenario + "_" + str(scale) + ".nc")
                
-##########################################
-##########################################
-##########################################
-##########################################
-##########################################
-
 
 #############################
 ### Find baseline indices ###

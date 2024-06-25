@@ -32,7 +32,7 @@ scale      <- 3
 
 
 #Variables
-vars <- c("pr", "qtot", "sm")#, "mrro") #list.files(paste0(dr_path, exp[1]))
+vars <- c("pr", "qtot", "sm_root")#, "mrro") #list.files(paste0(dr_path, exp[1]))
 
 var_labels <- c("Precipitation", "Runoff", "Soil moisture") #labels for plotting
 
@@ -71,13 +71,13 @@ col_opts <- rev(brewer.pal(11, 'RdYlBu'))
 cols_diff <- colorRampPalette(col_opts) 
 
 #Limits
-lims_hist <- list(pr =   list(duration  = c(1, 1.8, 1.9, 2, 2.1, 2.2, 2.3, 2.4, 1000),
+lims_hist <- list(pr =   list(duration  = c(1, 1.8, 1.9, 2, 2.1, 2.2, 2.3, 2.4, 1000) + (scale-1),
                               rel_intensity = c(0, 30, 40, 50, 60, 70, 80, 90, 100),
                               frequency = c(0, 8.5, 8.8, 9.1, 9.4, 9.7, 10, 10.3, 1000)),
-                  qtot = list(duration  = c(2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 1000),
+                  qtot = list(duration  = c(2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 1000)+ (scale-1),
                               rel_intensity = c(0, 30, 40, 50, 60, 70, 80, 90, 100),
                               frequency = c(0, 8.5, 8.8, 9.1, 9.4, 9.7, 10, 10.3, 1000)),
-                  sm =   list(duration  = c(2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 1000),
+                  sm_root =   list(duration  = c(2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 1000)+ (scale-1),
                               rel_intensity = c(0, 30, 40, 50, 60, 70, 80, 90, 100),
                               frequency = c(0, 8.5, 8.8, 9.1, 9.4, 9.7, 10, 10.3, 1000)))
 
@@ -112,12 +112,12 @@ for (m in 1:length(metrics)) {
   }
   
   ### Set up figure ###
-  png(paste0(outdir, "/FigureX", "_Mean_changes_in_", metrics[m], "_",
+  png(paste0(outdir, "/Figure1", "_Mean_changes_in_", metrics[m], "_",
              percentile, "_", scale, ".png"),
-      height=height, width=7.3, units="in", res=400)
+      height=height, width=6.5, units="in", res=400)
   
   
-  par(mai=c(0, 0.05, 0.2, 0.0))
+  par(mai=c(0, 0.0, 0.1, 0.0))
   par(omi=c(0.1, 0.3, 0.4, 0.1))
   
    #par(mfcol=c(3, 3))
@@ -194,16 +194,25 @@ for (m in 1:length(metrics)) {
     ### Plotting ###
     ################
     
+    
+    ### Historical median ###
+    
+    #Only plot for duration and intensity. Frequency is 15% by definition
+    
     if (metrics[m] != "frequency") {
       
-      ### Historical median ###
+      #Add the scale to the duration (i.e. 3-month scale should have a minimum
+      #drought length of 3 months)
+      if(metrics[m] == "duration"){
+        ens_median_hist <- ens_median_hist + (scale-1)
+      }
       
+      #Colours
       plot_col <- cols_hist(length(lims_hist[[vars[v]]][[metrics[m]]])-1)
       
       #Plot
       image(ens_median_hist, breaks=lims_hist[[vars[v]]][[metrics[m]]], 
             col=plot_col, axes=FALSE, ann=FALSE, asp=1)
-      
       
       #Australia outline
       map(region="Australia", add=TRUE, lwd=0.7) #border="grey50"
@@ -224,11 +233,11 @@ for (m in 1:length(metrics)) {
       len <- length(lims_hist[[vars[v]]][[metrics[m]]])-1
       add_raster_legend2(cols=plot_col, limits=lims_hist[[vars[v]]][[metrics[m]]][2:len],
                          main_title=unit[m], plot_loc=c(0.1,0.9,0.63, 0.77), 
-                         title.cex=1, spt.cex=1, clip=TRUE, ysp_title_old=FALSE)
-      
-      
+                         title.cex=1, spt.cex=1, clip=TRUE, ysp_title_old=FALSE,
+                         title_fac=0.3)
       
     }
+    
     
     ### Future change ###
     
@@ -322,8 +331,9 @@ for (m in 1:length(metrics)) {
       #Legend
       len <- length(lims_diff[[metrics[m]]])-1
       add_raster_legend2(cols=cols_diff(len), limits=lims_diff[[metrics[m]]][2:len],
-                                         main_title=unit[m], plot_loc=c(0.3,0.7,0.63, 0.77), 
-                                         title.cex=1, spt.cex=1, clip=TRUE, ysp_title_old=FALSE)
+                                         main_title=unit[m], plot_loc=c(0.3,0.7,0.35, 0.5), 
+                                         title.cex=1.1, spt.cex=1, clip=TRUE, ysp_title_old=FALSE,
+                         title_fac=0.3)
     }
      
     

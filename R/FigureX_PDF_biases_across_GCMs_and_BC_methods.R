@@ -256,7 +256,7 @@ for (m in 1:length(metrics)) {
     
     if(v==1) {
       legend("topright", legend=bc_methods, col=cols, bty="n", lty=1)
-      mtext(side=3, line=2, "BC method")
+      mtext(side=3, line=2, "DS-BC method")
     }
     
     

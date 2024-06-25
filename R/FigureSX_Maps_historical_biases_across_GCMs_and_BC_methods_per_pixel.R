@@ -22,7 +22,7 @@ scale      <- 3
 
 
 #Variables
-vars <- c("pr", "qtot", "sm")
+vars <- c("pr", "qtot", "sm_root")
 
 var_labels <- c("Precipitation", "Runoff", "Soil moisture") #labels for plotting
 
@@ -107,7 +107,7 @@ for (m in 1:length(metrics)) {
   for (v in 1:length(vars)) {
    
     ### Set up figure ###
-    png(paste0(outdir, "/FigureX", "_historical_map_of_biases_in_", metrics[m], "_",
+    png(paste0(outdir, "/FigureS6-8", "_historical_map_of_biases_in_", metrics[m], "_",
                percentile, "_", scale, "_", vars[v], ".png"),
         height=9.5, width=5.3, units="in", res=400)
     
@@ -138,8 +138,14 @@ for (m in 1:length(metrics)) {
       
     } else {
       
+      #Use different variable name for sm. should recreate file but leave for now
+      variable <- vars[v]
+      if(vars[v] == "sm_root"){
+        variable <- "sm"
+      } 
+      
       obs_file <- paste0(path, "/drought_metrics_AWRA_ref/", scale, "-month/",
-                         "drought_metrics_AWRA_ref_", vars[v], "_scale_", scale, "_1960_2020.nc")
+                         "drought_metrics_AWRA_ref_", variable, "_scale_", scale, "_1960_2020.nc")
       
       #Select 1970-2020
       obs_data <- brick(obs_file, varname=metrics[m])
@@ -242,7 +248,7 @@ for (m in 1:length(metrics)) {
       mtext(side=3, line=0, main_labels[p], cex=0.8)
       
       if(p==1)  mtext(side=3, line=3, "GCM", cex=1.2) #GCM label
-      if(p==5)  mtext(side=3, line=3, "BC method", cex=1.2) #GCM label
+      if(p==5)  mtext(side=3, line=3, "DS-BC method", cex=1.2) #GCM label
       
     }
     

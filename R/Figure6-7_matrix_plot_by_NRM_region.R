@@ -24,7 +24,7 @@ scale      <- 3
 
 
 #Variables
-vars <- c("pr", "qtot", "sm")#, "mrro") #list.files(paste0(dr_path, exp[1]))
+vars <- c("pr", "qtot")#, "sm_root")#, "mrro") #list.files(paste0(dr_path, exp[1]))
 
 var_labels <- c("Precipitation", "Runoff", "Soil moisture") #labels for plotting
 
@@ -80,9 +80,15 @@ breaks_hist <- list(duration=c(minn, seq(-0.5, 0.5, by=0.1), maxx),
                     rel_intensity=c(minn, seq(-25, 25, by=5), maxx),
                     timing=c(minn, seq(-25, 25, by=5), maxx))
 
-breaks_trend <- list(duration=c(minn, seq(-0.5, 0.5, by=0.1), maxx)/1000,
-                    rel_intensity=c(minn, seq(-25, 25, by=5), maxx)/1000,
-                    timing=c(minn, seq(-25, 25, by=5), maxx)/1000)
+breaks_trend <- list(pr=list(duration=c(minn, seq(-0.05, 0.05, by=0.01), maxx), # seq(-0.5, 0.5, by=0.1), maxx)/1000,
+                             rel_intensity=c(minn, seq(-25, 25, by=5), maxx)/1000,
+                             timing=c(minn, seq(-25, 25, by=5), maxx)/1000),
+                    qtot=list(duration=c(minn, seq(-0.16, 0.16, by=0.04), maxx), #seq(-1.5, 1.5, by=0.3), maxx)/1000,
+                              rel_intensity=c(minn, seq(-25, 25, by=5), maxx)/1000,
+                              timing=c(minn, seq(-25, 25, by=5), maxx)/1000),
+                    sm=list(duration=c(minn, seq(-1, 1, by=0.1), maxx)/1000,
+                            rel_intensity=c(minn, seq(-25, 25, by=5), maxx)/1000,
+                            timing=c(minn, seq(-25, 25, by=5), maxx)/1000))
 
 
 ###################
@@ -119,7 +125,7 @@ for (v in 1:length(vars)) {
         height=9.5, width=8.3, units="in", res=400)
     
     
-    par(mai=c(0.6, 0.2, 0.2, 0.2))
+    par(mai=c(0.8, 0.2, 0.2, 0.2))
     par(omi=c(0.1, 1.2, 0.4, 0.3))
     
     layout(matrix(c(1,2, 3, 3, 4, 5, 6, 6), ncol=2, byrow=TRUE), heights=c(1,0.3,1,0.3))
@@ -131,8 +137,6 @@ for (v in 1:length(vars)) {
 
     trend_gcm_matrix <- matrix(nrow=length(nrm_vals), ncol=4)
     trend_bc_matrix  <- matrix(nrow=length(nrm_vals), ncol=4)
-    
-    
     
     
     #Loop through regions
@@ -273,7 +277,7 @@ for (v in 1:length(vars)) {
     
     breaks <- breaks_hist[[metrics[m]]]
     
-    main_title <- c("GCM", "BC method")  
+    main_title <- c("GCM", "DS-BC method")
     
     for (p in 1:length(plot_data)) {
       
@@ -290,17 +294,16 @@ for (v in 1:length(vars)) {
              at=seq(0,1, length.out=length(nrm_labels)))
         
       mtext(side=3, main_title[p], line=1, cex=1.2)
-      
     
     }
     
     
     ### Legend ###
     
-    plot(1, type="n", xaxt="n", yaxt="n", bty="n") #empty plot
+    plot(1, type="n", xaxt="n", yaxt="n", bty="n", ylab="", xlab="") #empty plot
     add_raster_legend2(hist_cols(length(breaks)-1), breaks[2:(length(breaks)-1)],
-                       plot_loc=c(0.2,0.8,-0.35,-0.05), main_title=paste0("Bias (", unit[metrics[m]], ")"),
-                       spt.cex=1.5)
+                       plot_loc=c(0.2,0.8,-12.95,-11), main_title=paste0("Bias (", unit[metrics[m]], ")"),
+                       spt.cex=1.5, title_fac=-0.5)
     
     
     
@@ -310,11 +313,15 @@ for (v in 1:length(vars)) {
     
     plot_labs <- list(as.vector(gcm_labels), bc_methods)
     
-    breaks <- breaks_trend[[metrics[m]]]
+    breaks <- breaks_trend[[vars[v]]][[metrics[m]]]
     
-    
+      
     for (p in 1:length(plot_data)) {
       
+      #If duration, changes units to months per decade for tidier labels
+      #(breaks already set accordingly)
+      if (metrics[m] == "duration") plot_data[[p]] <- plot_data[[p]] * 120
+        
       #matrix plot
       image(t(plot_data[[p]]), breaks=breaks, col=trend_cols(length(breaks)-1), xaxt="n",
             yaxt="n")
@@ -331,10 +338,15 @@ for (v in 1:length(vars)) {
     
     ### Legend ###
     
-    plot(1, type="n", xaxt="n", yaxt="n", bty="n") #empty plot
+    #If duration, change units to months per year for tidier labels
+    #ALREADY DONE ABOVE when setting limits
+    #if (metrics[m] == "duration") breaks <- round(breaks *120, digits=2)
+    
+    
+    plot(1, type="n", xaxt="n", yaxt="n", bty="n", ylab="", xlab="") #empty plot
     add_raster_legend2(trend_cols(length(breaks)-1), breaks[2:(length(breaks)-1)],
-                       plot_loc=c(0.2,0.8,-0.35,-0.05), main_title=paste0("Trend (", unit[metrics[m]], ")"),
-                       spt.cex=1.5, xpd=NA)
+                       plot_loc=c(0.2,0.8,-12.95,-11), main_title=paste0("Trend (", unit[metrics[m]], "/decade)"),
+                       spt.cex=1.5, xpd=NA, title_fac=-0.5)
     
     dev.off ()
     
@@ -348,47 +360,3 @@ for (v in 1:length(vars)) {
 
 
 
-
-
-
-
-
-
-# 
-# ### GCM and BC trend ###
-# 
-# gg_trend <- list()
-# 
-# plot_data_trend <- list(trend_gcm_matrix, trend_bc_matrix)
-# 
-# 
-# for (p in 1:length(plot_data_trend)) {
-#   
-#   #Create data frame
-#   df        <- reshape2::melt(plot_data_trend[[p]], c("region", "gcm_bc"), value.name = "bias")
-#   df$region <- as.factor(df$region)
-#   df$gcm_bc <- as.factor(df$gcm_bc)
-#   
-#   
-#   gg_trend[[p]] <- ggplot(df, aes(x=gcm_bc,y=region)) + 
-#     geom_raster(aes(fill=bias)) + 
-#     scale_fill_gradient2(midpoint=0, low=hist_cols[1], 
-#                          mid=hist_cols[2], high=hist_cols[3]) +      
-#     scale_x_discrete(breaks=1:length(gcm_labels), labels=plot_labs[[p]]) +
-#     scale_y_discrete(breaks=1:length(nrm_labels) ,labels=nrm_labels) +
-#     labs(x ="", y ="") + theme(axis.text.x = element_text(angle = 90)) +
-#     theme_minimal()
-#   
-#   if(p==1) gg_trend[[p]] + theme(legend.position = "none")
-#   
-# }
-# 
-# 
-# 
-# 
-# 
-# ggarrange(gg_hist[[1]], gg_hist[[2]], common_legend=TRUE)
-# 
-# gg_trend[[1]], gg_trend[[2]],
-# nrow=2, ncol=2)
-# 

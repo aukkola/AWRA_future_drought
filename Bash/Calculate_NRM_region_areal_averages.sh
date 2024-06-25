@@ -23,7 +23,7 @@ scale=3
 declare -a metrics=("duration" "rel_intensity" "timing")
 
 #Set variables
-declare -a vars=("pr" "qtot" "sm")
+declare -a vars=("sm_root") #("pr" "qtot" "sm_root")
 
 #Set variables
 declare -a scenarios=("rcp45" "rcp85")
@@ -68,6 +68,8 @@ do
             outdir=$path"/NRM_means/data/scale_"$scale"/"$m"/"$scen"/"$v"/"$bc"/"$gcm
             mkdir -p $outdir
             
+            echo "Outdir: $outdir"
+            
             #Temp file
             temp_file="$outdir/temp.nc"
 
@@ -80,17 +82,17 @@ do
             do
               
               temp_masked="$outdir/temp_masked.nc"
-              
-              #Mask NRM region
-              cdo -L div $temp_file -eqc,$nrm $nrm_file $temp_masked
-       
+                   
               #Output file
               outfile="${outdir}/Areal_mean_${m}_${bc}_${gcm}_${scen}_${v}_scale_${scale}_region${nrm}.nc"
        
               #Check if file exists, skip otherwise
               if [ ! -f $outfile ]
               then
-            
+        
+                #Mask NRM region
+                cdo -L div $temp_file -eqc,$nrm $nrm_file $temp_masked
+    
                 #If variable is timing, take areal sum
                 if [ $m == "timing" ]
                 then
@@ -99,13 +101,12 @@ do
                 else
                   cdo -L fldmean $temp_masked $outfile
                 fi
+              
+                #Remove temp file
+                rm $temp_masked
                 
               fi    
               
-              
-              #Remove temp file
-              rm $temp_masked
-          
           
             done #NRM regions
    

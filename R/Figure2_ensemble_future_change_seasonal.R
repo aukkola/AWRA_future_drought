@@ -32,7 +32,7 @@ scale      <- 3
 
 
 #Variables
-vars <- c("pr", "qtot", "sm")#, "mrro") #list.files(paste0(dr_path, exp[1]))
+vars <- c("pr", "qtot", "sm_root")#, "mrro") #list.files(paste0(dr_path, exp[1]))
 
 var_labels <- c("Precipitation", "Runoff", "Soil moisture") #labels for plotting
 
@@ -42,6 +42,8 @@ metrics <- c("rel_intensity_by_month", "frequency")
 
 #List seasons
 seasons <- c("summer", "autumn", "winter", "spring")
+season_labels <- c("Summer (DJF)", "Autumn (MAM)", "Winter (JJA)", "Spring (SON)")
+
 
 #Experiments
 exp <- c("rcp45", "rcp85")
@@ -111,12 +113,12 @@ for (m in 1:length(metrics)) {
     
     
     ### Set up figure ###
-    png(paste0(outdir, "/FigureX", "_Mean_seasonal_changes_in_", metrics[m], "_",
+    png(paste0(outdir, "/Figure2", "_Mean_seasonal_changes_in_", metrics[m], "_",
                percentile, "_", scale, "_", exp[e], ".png"),
-        height=8.5, width=8.3, units="in", res=400)
+        height=8.5, width=7.8, units="in", res=400)
     
     
-    par(mai=c(0, 0.1, 0.2, 0.1))
+    par(mai=c(0, 0.1, 0.2, 0))
     par(omi=c(0.1, 0.3, 0.4, 0.1))
     
     layout(matrix(c(1:4, 5, 6:9, 5, 10:13, 5), nrow=5), heights=c(1, 1, 1, 1, 0.3,
@@ -155,6 +157,14 @@ for (m in 1:length(metrics)) {
 
         data_hist <- brick(lapply(data_files_hist, raster))
         data_rcp  <- brick(lapply(data_files_rcp, raster))
+        
+        
+        # 
+        # for(kkkk in 1:(length(data_files_hist))){
+        #   test=raster(data_files_hist[kkkk], stopIfNotEqualSpaced=F)
+        #   
+        # }
+        # 
         
         
         #Need to convert frequency to "percentage of time under drought"
@@ -228,7 +238,7 @@ for (m in 1:length(metrics)) {
                         sum(values(area_total), na.rm=TRUE)) *100
         
         
-        mtext(side=3, line=-3, text=paste0(sprintf("%.1f", land_area), "%"), adj=0.1, cex=0.65)
+        mtext(side=3, line=-3, text=paste0(sprintf("%.1f", land_area), "%"), adj=0.1, cex=0.75)
         
         
         ### Stippling (where models don't agree) ###
@@ -252,7 +262,7 @@ for (m in 1:length(metrics)) {
         
         
         ### Season label ###
-        if (v==1) mtext(side=2, line=1, text=seasons[s])
+        if (v==1) mtext(side=2, line=1, text=season_labels[s])
         
 
       
@@ -266,8 +276,9 @@ for (m in 1:length(metrics)) {
           #Legend
           len <- length(lims_diff[[metrics[m]]])-1
           add_raster_legend2(cols=cols_diff(len), limits=lims_diff[[metrics[m]]][2:len],
-                             main_title=unit[m], plot_loc=c(0.3,0.7,0.63, 0.77), 
-                             title.cex=1, spt.cex=1, clip=TRUE, ysp_title_old=FALSE)
+                             main_title=unit[m],  plot_loc=c(0.3,0.7,0.35, 0.5), 
+                             title.cex=1.1, spt.cex=1, clip=TRUE, ysp_title_old=FALSE,
+                             title_fac=0.3)
         }
         
         

@@ -21,7 +21,7 @@ scale      <- 3
 
 
 #Variables
-vars <- c("pr", "qtot", "sm")
+vars <- c("pr", "qtot", "sm_root")
 
 var_labels <- c("Precipitation", "Runoff", "Soil moisture") #labels for plotting
 
@@ -77,10 +77,10 @@ gcm_labels <- c(CNRM  = "CNRM-CM5",
 
 x_range <- list(duration=list(pr=c(1,3.5) + scale-1,
                               qtot=c(1,5)+ scale-1,
-                              sm=c(1,6)+ scale-1),
+                              sm_root=c(1,6)+ scale-1),
                 rel_intensity=list(pr=c(10,90),
                                    qtot=c(10,90),
-                                   sm=c(10,90)))
+                                   sm_root=c(10,90)))
 
 #Set up parallel processing for trend calculation
 #cl <- makeCluster(getOption('cl.cores', 28))
@@ -104,7 +104,7 @@ for (m in 1:length(metrics)) {
   #   
     
     ### Set up figure ###
-    png(paste0(outdir, "/FigureX", "_historical_PDFs_in_", metrics[m], "_",
+    png(paste0(outdir, "/Figure5", "_historical_PDFs_in_", metrics[m], "_",
                percentile, "_", scale, "_", exp, "_whole_continent.png"),
         height=9.5, width=7.3, units="in", res=400)
     
@@ -141,9 +141,15 @@ for (m in 1:length(metrics)) {
         obs_data <- brick(obs_file, varname=metrics[m])[[841:1452]]
         
       } else {
-        
+        if(vars[v]=="sm_root"){
+          var="sm"
+        } else {
+          var=vars[v]
+        }
+        #quick bug fix before re-run ref file
         obs_file <- paste0(path, "/drought_metrics_AWRA_ref/", scale, "-month/",
-                           "drought_metrics_AWRA_ref_", vars[v], "_scale_", scale, "_1960_2020.nc")
+                           "drought_metrics_AWRA_ref_", var, "_scale_", scale, "_1960_2020.nc")
+                           #vars[v], "_scale_", scale, "_1960_2020.nc")
         
         #Select 1970-2020
         obs_data <- brick(obs_file, varname=metrics[m])
@@ -320,7 +326,7 @@ for (m in 1:length(metrics)) {
       #Need to place legend in a different spot depending on variable/metric
       position <- "topright"
       
-      if (metrics[m] == "rel_intensity" & vars[v] %in% c("pr", "qtot")) {
+      if (metrics[m] == "rel_intensity" ){ #& vars[v] %in% c("pr", "qtot")) {
         position <- "topleft"
       } 
       
@@ -354,7 +360,7 @@ for (m in 1:length(metrics)) {
       
       #Main title
       if(v==1) {
-        mtext(side=3, line=1, cex=1.2, "BC method")
+        mtext(side=3, line=1, cex=1.2, "DS-BC method")
       }
       
       #x-label
@@ -378,6 +384,9 @@ for (m in 1:length(metrics)) {
 
 endCluster()
 
-#stopCluster(cl) #need to put this here, otherwise temporary .grd files craeted by parallel code become unavailable
-
+#stopCluster(cl) #need to put this here, otherwise temporary .grd files created by parallel code become unavailable
+# 
+# "#AE3C60","#F3C33C", "#267778", "#82B4BB"
+# "#6EC3C1", "#335120", "#9DCC5F", "#0D5F8A"
+# "#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3"
 

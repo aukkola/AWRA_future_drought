@@ -18,7 +18,7 @@ percentile <- "Perc_15"
 scale      <- 3
 
 #Variables
-vars <- c("pr", "qtot", "sm")
+vars <- c("pr", "qtot", "sm_root")
 
 #List metrics
 metrics <- c("duration", "rel_intensity")

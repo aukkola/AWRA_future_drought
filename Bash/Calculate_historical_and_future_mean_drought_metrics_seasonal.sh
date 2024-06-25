@@ -3,7 +3,7 @@
 #PBS -m ae
 #PBS -P w97
 #PBS -q normal
-#PBS -l walltime=04:40:00
+#PBS -l walltime=08:40:00
 #PBS -l mem=3GB
 #PBS -l ncpus=1
 #PBS -j oe
@@ -26,7 +26,7 @@ declare -a scale=("3" "24")
 declare -a exp=("historical" "rcp45" "rcp85")
 
 #Set variables
-declare -a vars=("pr" "qtot" "sm")
+declare -a vars=("pr" "qtot" "sm_root")
 
 #Set metrics
 declare -a metrics=("frequency" "rel_intensity_by_month")

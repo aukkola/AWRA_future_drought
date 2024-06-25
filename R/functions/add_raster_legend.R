@@ -1,6 +1,7 @@
 add_raster_legend2 <-function(cols,limits,labelss=NULL,x='bottomleft',add=TRUE,
-                              spt.cex=2,pch=15,main_title='', title.cex=1.8,
-                              plot_loc=c(0.22,0.78,0.07,0.10), clip=FALSE, ysp_title_old=FALSE, ...) {
+                              spt.cex=2,pch=15,main_title='', title.cex=1.8, 
+                              plot_loc=c(0.22,0.78,0.07,0.10), clip=FALSE, 
+                              ysp_title_old=FALSE, title_fac=0.1, ...) {
   
   cal_frac_of_plot_covered <- function(index=1:2) {
     xlims=par("usr")[index]
@@ -75,11 +76,11 @@ add_raster_legend2 <-function(cols,limits,labelss=NULL,x='bottomleft',add=TRUE,
   text(x=xt,y=yt,labelss,xpd=NA, cex=spt.cex)
   #changed y=max(yt+max(yt*0.15)) from y=max(yt-max(yt*0.35))
   #Had to change this for some plots, but change doesn't work for some others...
- # if (ysp_title_old) {
+  if (ysp_title_old) {
     text(x=mean(xt[2:length(xt)]),y=1.9, main_title, xpd=NA, cex=title.cex)
-#  } else {
- #   text(x=mean(xt),y=max(yt+max(yt*0.1)),main_title,xpd=NA, cex=title.cex)
-#  }
+  } else {
+    text(x=mean(xt),y=max(yt+max(yt*title_fac)),main_title,xpd=NA, cex=title.cex)
+  }
   #===============================
 }
 

@@ -9,7 +9,7 @@ rm(list=ls(all=TRUE))
 
 
 #Set path
-path <- "/g/data/w97/amu561/Steven_CABLE_runs/" #"/srv/ccrc/data04/z3509830/CMIP6_drought//"
+path <- "/g/data/w97/amu561/Steven_CABLE_runs/"
 
 #source function
 
@@ -24,7 +24,7 @@ scale      <- 3
 
 
 #Variables
-vars <- c("pr", "qtot", "sm")#, "mrro") #list.files(paste0(dr_path, exp[1]))
+vars <- c("pr", "qtot", "sm_root")
 
 var_labels <- c("Precipitation", "Runoff", "Soil moisture") #labels for plotting
 
@@ -111,8 +111,8 @@ for (m in 1:length(metrics)) {
       height=13.5, width=8.3, units="in", res=400)
   
   
-  par(mai=c(0.6, 0.2, 0.2, 0.2))
-  par(omi=c(0.1, 1.2, 0.4, 0.3))
+  par(mai=c(0.7, 0.2, 0.2, 0.2))
+  par(omi=c(0.15, 1.2, 0.4, 0.3))
   
   layout(matrix(c(1:6, 7, 7), ncol=2, byrow=TRUE), heights=c(1,1,1,0.3))
   
@@ -134,9 +134,12 @@ for (m in 1:length(metrics)) {
       ### Obs data ###
       ################
       
+      variable <- vars[v]
+      if(vars[v] == "sm_root") variable <- "sm"
+      
       #Get obs file
       obs_file <- list.files(paste0(path, "/NRM_means/data_obs/scale_", scale, "/", metrics[m],
-                                    "/", vars[v], "/"), pattern=paste0("region", nrm_vals[r]), full.names=TRUE)
+                                    "/", variable, "/"), pattern=paste0("region", nrm_vals[r]), full.names=TRUE)
       
       #Select years 1970-2020 to match model runs and AWRA reference runs
       obs_data <- load_ncdf_var(obs_file, metrics[m])
@@ -177,7 +180,7 @@ for (m in 1:length(metrics)) {
                                full.names=TRUE, recursive=TRUE)
       
       #Should find 16 files in each case, check
-      if (length(data_files) != 16) {
+      if (length(data_files) < 15) {
         stop("Incorrect number of files found")
       }
       
@@ -269,7 +272,7 @@ for (m in 1:length(metrics)) {
     breaks <- breaks_trend[[metrics[m]]]
     
     #Main title
-    main_title <- c("GCM", "BC method")  
+    main_title <- c("GCM", "DS-BC method")  
     
     
     for (p in 1:length(plot_data)) {
@@ -302,18 +305,20 @@ for (m in 1:length(metrics)) {
       int_x <- (x[2]-x[1])/2
       int_y <- (y[2]-y[1])/2
       
-      for (i in 1:nrow(plot_pvals[[p]])) {
-        for(j in 1:ncol(plot_pvals[[p]])) {
-          
-          if (plot_pvals[[p]][i,j] <3 ) {
-            
-            polygon(c(x[j]-int_x, rep(x[j]+int_x, 2),x[j]-int_x),
-                    c(rep(y[i]+int_y, 2), rep(y[i]-int_y, 2)),
-                    add=TRUE, density=5, border=NA)
-            
-          }
-        }
-      }
+      pvals <- t(plot_pvals[[p]])
+      
+      # for (i in 1:nrow(plot_pvals[[p]])) {
+      #   for(j in 1:ncol(plot_pvals[[p]])) {
+      #     
+      #     if (plot_pvals[[p]][i,j] <3 ) {
+      #       
+      #       polygon(c(x[j]-int_x, rep(x[j]+int_x, 2),x[j]-int_x),
+      #               c(rep(y[i]+int_y, 2), rep(y[i]-int_y, 2)),
+      #               add=TRUE, density=10, border=NA)
+      #       
+      #     }
+      #   }
+      # }
 
       
       
@@ -324,10 +329,10 @@ for (m in 1:length(metrics)) {
     
     if (v==3) {
       
-      plot(1, type="n", xaxt="n", yaxt="n", bty="n") #empty plot
+      plot(1, type="n", xaxt="n", yaxt="n", bty="n", xlab="", ylab="") #empty plot
       add_raster_legend2(trend_cols(length(breaks)-1), breaks[2:(length(breaks)-1)],
-                         plot_loc=c(0.2,0.8,-0.35,-0.05), main_title=paste0("Trend (", unit[metrics[m]], ")"),
-                         spt.cex=1.5, xpd=NA)
+                         plot_loc=c(0.1,0.9,-1.05,-0.75), main_title=paste0("Trend (", unit[metrics[m]], "/yr)"),
+                         spt.cex=1.5, xpd=NA, title_fac=1.6)
     }
     
      

@@ -27,7 +27,6 @@ declare -a metrics=("duration" "rel_intensity" "timing")
 #Set variables
 declare -a vars=("pr" "qtot" "sm")
 
-
 #9 NRM regions in total (numbered 1-9)
 
 #NRM regions

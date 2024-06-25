@@ -1,5 +1,3 @@
-## Adapted code from Anna Ukkola 
-
 #################################
 ### IMPORT NECESSARY PACKAGES ###
 #################################
@@ -39,7 +37,7 @@ from drought_metrics import *
 #Calculates droughts metrics for AWRA historical reference runs
 
 ### Set variable ###
-variable=['qtot', 'sm']
+variable=['qtot', 'sm_root']
 
 ### Set drought metric conditions ###
 return_all_tsteps=True
@@ -83,19 +81,20 @@ for v in range(len(variable)):
         
         ### Merge and then calculate monthly sum data ###
         
+        final_qtot_file = str(temp_dir_path + "/qtot.nc")
+        
         temp_qtot_file = str(temp_dir_path + "/qtot_temp.nc")
         
         os.system("cdo mergetime " + files + " " + temp_qtot_file)
 
         ### Calculate monthly sums ###
-        os.system("cdo monsum -selyear,1960/2020 " + temp_qtot_file + " " + temp_dir_path +
-                  "/qtot.nc")
+        os.system("cdo monsum -selyear,1960/2020 " + temp_qtot_file + " " + final_qtot_file)
 
         os.system("rm "+ temp_qtot_file)
     
                   
     #Soil moisture              
-    elif variable[v] == "sm":
+elif variable[v] == "sm_root":
         
         # files_s0 = str("/g/data/fj8/BoM/AWRA/DATA/AWRA_REF_FORECAST_HYDROPROJ/" +
         #                          "awral_orv6qes-viney-icc.2018.1.163/sim/s0_*.nc")
@@ -133,36 +132,36 @@ for v in range(len(variable)):
         #s0 data
         
         #If s0 file doesn't exist
-        final_s0_file=str(temp_dir_path + "/s0.nc")
+        final_s0_file=str(temp_dir_path + "/s0_ref.nc")
         
         if not os.path.isfile(final_s0_file):
         
             print("Merging s0 files")
             
-            temp_s0_file = str(temp_dir_path + "/s0_temp.nc")
+            temp_s0_file = str(temp_dir_path + "/s0_ref_temp.nc")
             
             os.system("cdo mergetime " + merged_files_s0 + " " + temp_s0_file)
 
             os.system("cdo monmean -selyear,1960/2020 " + temp_s0_file + " " + final_s0_file)
 
-            os.system("rm "+ temp_s0_file)
+            #os.system("rm "+ temp_s0_file)
         
         #ss data
         
         #If ss file doesn't exist
-        final_ss_file=str(temp_dir_path + "/ss.nc")
+        final_ss_file=str(temp_dir_path + "/ss_ref.nc")
         
         if not os.path.isfile(final_ss_file):
 
             print("Merging ss files")
 
-            temp_ss_file = str(temp_dir_path + "/ss_temp.nc")
+            temp_ss_file = str(temp_dir_path + "/ss_ref_temp.nc")
             
             os.system("cdo mergetime " + merged_files_ss + " " + temp_ss_file)
 
             os.system("cdo monmean -selyear,1960/2020 " + temp_ss_file + " " + final_ss_file)
 
-            os.system("rm "+ temp_ss_file)
+            #os.system("rm "+ temp_ss_file)
 
 
     #################
@@ -170,7 +169,7 @@ for v in range(len(variable)):
     #################
 
     #Model data
-    if variable[v] == "sm":
+    if variable[v] == "sm_root":
 
         fh        = Dataset(final_s0_file, mode='r')
         ds_ss     = Dataset(final_ss_file, mode='r')
@@ -187,7 +186,7 @@ for v in range(len(variable)):
 
     elif variable[v] == "qtot":
         
-        fh       = Dataset(str(temp_dir_path +"/qtot.nc"), mode='r')
+        fh       = Dataset(final_qtot_file, mode='r')
         all_data = fh.variables[variable[v]][:] #[yr_ind]
         
         data     = all_data.data 

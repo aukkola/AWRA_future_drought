@@ -26,13 +26,13 @@ scale      <- 3
 
 
 #Variables
-vars <- c("pr", "qtot", "sm")#, "mrro") #list.files(paste0(dr_path, exp[1]))
+vars <- c("pr", "qtot", "sm_root")#, "mrro") #list.files(paste0(dr_path, exp[1]))
 
 var_labels <- c("Precipitation", "Runoff", "Soil moisture") #labels for plotting
 
 
 #List metrics
-metrics <- c("frequency") #duration", "rel_intensity", "frequency")
+metrics <- c("frequency", "duration", "rel_intensity") #, "frequency")
 
 
 #Experiments
@@ -75,7 +75,7 @@ for (m in 1:length(metrics)) {
   
   
   ### Set up figure ###
-  png(paste0(outdir, "/FigureX", "_Sources_of_uncertainty_in_", metrics[m], "_",
+  png(paste0(outdir, "/Figure3", "_Sources_of_uncertainty_in_", metrics[m], "_",
              percentile, "_", scale, ".png"),
       height=6.5, width=8.3, units="in", res=400)
   
@@ -374,8 +374,8 @@ for (m in 1:length(metrics)) {
                       round(aus_average$GCM$rcp45[3] * 100), "%]")
     
     
-    text(118, -12, text, cex=0.8)
-    text(118, -15, ci_text, cex=0.8, adj=0.5)
+    text(118, -12, text, cex=0.9)
+    text(118, -15, ci_text, cex=0.9, adj=0.5)
 
     # mtext(side=3, line=-1, text=text, adj=0.0, cex=0.45)
     # mtext(side=3, line=-3, text=text1, adj=-0.05, cex=0.45)
@@ -395,7 +395,7 @@ for (m in 1:length(metrics)) {
     
     
     #Source of uncertainty label   
-    if (v==1) mtext(side=2, line=1, text="BC method")
+    if (v==1) mtext(side=2, line=1, text="DS-BC method")
     
     #Aus average
     text <- paste0(round(aus_average$BC$rcp45[1]*100), "%")
@@ -404,8 +404,8 @@ for (m in 1:length(metrics)) {
                       round(aus_average$BC$rcp45[3] * 100), "%]")
     
     
-    text(118, -12, text, cex=0.8)
-    text(118, -15, ci_text, cex=0.8, adj=0.5)
+    text(118, -12, text, cex=0.9)
+    text(118, -15, ci_text, cex=0.9, adj=0.5)
     
     
     ### RCP scenario ###
@@ -430,8 +430,8 @@ for (m in 1:length(metrics)) {
                       round(aus_average$RCP[3] * 100), "%]")
     
     
-    text(118, -12, text, cex=0.8)
-    text(118, -15, ci_text, cex=0.8, adj=0.5)
+    text(118, -12, text, cex=0.9)
+    text(118, -15, ci_text, cex=0.9, adj=0.5)
     
     
     
@@ -444,8 +444,9 @@ for (m in 1:length(metrics)) {
       #Legend
       len <- length(lims)-1
       add_raster_legend2(cols=plot_col, limits=lims[2:len],
-                         main_title="%", plot_loc=c(0.35,0.65,0.63, 0.77), 
-                         title.cex=1, spt.cex=1, clip=TRUE, ysp_title_old=FALSE)
+                         main_title="%", plot_loc=c(0.2,0.7, 0.35, 0.55), 
+                         title.cex=1.2, spt.cex=1.1, clip=TRUE, ysp_title_old=FALSE,
+                         title_fac=0.5, xpd=NA)
       
       
     }
