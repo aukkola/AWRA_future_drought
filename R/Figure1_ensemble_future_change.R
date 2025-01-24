@@ -10,6 +10,7 @@ rm(list=ls(all=TRUE))
 #Set path
 path <- "/g/data/w97/amu561/Steven_CABLE_runs/" #"/srv/ccrc/data04/z3509830/CMIP6_drought//"
 
+scratch_path <- "/scratch/w97/amu561/monthly_sums/"
 
 #Source functions
 source(paste0(path,"/scripts/R/functions/perc_agree_on_sign_weighted_AR4_method.R"))

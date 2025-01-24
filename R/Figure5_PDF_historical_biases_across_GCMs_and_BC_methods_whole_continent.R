@@ -78,9 +78,9 @@ gcm_labels <- c(CNRM  = "CNRM-CM5",
 x_range <- list(duration=list(pr=c(1,3.5) + scale-1,
                               qtot=c(1,5)+ scale-1,
                               sm_root=c(1,6)+ scale-1),
-                rel_intensity=list(pr=c(10,90),
-                                   qtot=c(10,90),
-                                   sm_root=c(10,90)))
+                rel_intensity=list(pr=c(0,100),
+                                   qtot=c(0,100),
+                                   sm_root=c(0,100)))
 
 #Set up parallel processing for trend calculation
 #cl <- makeCluster(getOption('cl.cores', 28))
@@ -225,17 +225,23 @@ for (m in 1:length(metrics)) {
       nbins <- 50
       
       if(metrics[m] == "duration") {
-        
-        data_range <- c(1,6) #range(obs_vals, unlist(mod_vals), na.rm=TRUE)
+        data_range <- c(1,7) #range(obs_vals, unlist(mod_vals), na.rm=TRUE)
       } else if (metrics[m] == "rel_intensity") {
         data_range <- c(0,100) #range(obs_vals, unlist(mod_vals), na.rm=TRUE)
       } else {
         data_range <- range(obs_vals, unlist(mod_vals), na.rm=TRUE)
       }
       
-      data_range <- x_range[[metrics[m]]][[vars[v]]]
+      #data_range <- x_range[[metrics[m]]][[vars[v]]]
       
+      #use equal sized bins within the specified data range
       breaks <- seq(data_range[1], data_range[2], length.out=nbins)
+      
+      #Nb. this leaves out some outliers (e.g. runoff drought duration goes to 600 months).
+      #but this only affects a very small number of data points so should have little
+      #influence on the results. It does mean that the Perkins skill score needs to be tweaked
+      #as the data density should add up to 1 for its calculation
+      
       
       #Calculate obs density
       obs_freqs <- freqs(obs_vals, breaks, area)
@@ -279,6 +285,8 @@ for (m in 1:length(metrics)) {
       plot_x_range <- x_range[[metrics[m]]][[vars[v]]] 
       
       
+      
+      
       #######################
       ### Plot PDF by GCM ###
       #######################
@@ -319,8 +327,40 @@ for (m in 1:length(metrics)) {
       }
       
       
-      #Add legend with skill scores
-      perkins_gcm <- sapply(gcm_freqs, function(x) perkins_skill_score(x, obs_freqs))
+      ### Add legend with skill scores ###
+      
+      
+      #As per comment above, the PDFs that are plotted don't always include the full data
+      #range. This is because duration in particular can be very large for some pixels
+      #(the majority of data fits within the specified ranges). This is fine for plotting
+      #but causes issues when calculating the Perkins skill score as the densities
+      #need to add up to 1. Recalculate densities here using full data rang
+      
+      
+      #Check that observed and model frequencies sum up to 1 (allow a bit of margin)
+      all_freqs <- c(sum(obs_freqs), sapply(gcm_freqs, sum), sapply(bc_freqs, sum))
+      if(any(all_freqs < 0.98 | all_freqs > 1.01)) {
+        
+          print("adjusting histogram frequencies for skill score")
+        
+          #Use equal percentile bins based on obs data
+          quantile_breaks <- quantile(obs_vals, probs = seq(0, 1, length.out=nbins), na.rm=TRUE)
+            
+          obs_freqs_score <- freqs(obs_vals, quantile_breaks, area)
+          
+          gcm_freqs <- lapply(gcm_ind, function(x) freqs(unlist(mod_vals[x]), quantile_breaks, rep(area, length(x))))
+      
+          #Check that GCM frequencies add up to 1 (giving a bit of tolerance)
+          if(any(sapply(gcm_freqs, sum) < 0.99)) stop("GCM frequencies don't add up to 1")
+          
+          perkins_gcm <- sapply(gcm_freqs, function(x) perkins_skill_score(x, obs_freqs_score))
+          
+          
+      } else {
+        perkins_gcm <- sapply(gcm_freqs, function(x) perkins_skill_score(x, obs_freqs))
+      }
+
+      #Mean bias error      
       mbe_gcm     <- sapply(gcm_ind, function(x) mean(unlist(mod_vals[x]), na.rm=TRUE) - mean(obs_vals, na.rm=TRUE))
       
       #Need to place legend in a different spot depending on variable/metric
@@ -369,7 +409,24 @@ for (m in 1:length(metrics)) {
       }
       
       #Add legend with skill scores
-      perkins_bc <- sapply(bc_freqs, function(x) perkins_skill_score(x, obs_freqs))
+      
+      #As per above, recalculate frequencies for skill score if the original
+      #PDFs exclude too much data
+      if(any(all_freqs < 0.98 | all_freqs > 1.01)) {
+        
+        bc_freqs <- lapply(bc_ind, function(x) freqs(unlist(mod_vals[x]), quantile_breaks, rep(area, length(x))))
+        
+        #Check that GCM frequencies add up to 1 (giving a bit of tolerance)
+        if(any(sapply(bc_freqs, sum) < 0.99)) stop("BC frequencies don't add up to 1")
+        
+        perkins_bc <- sapply(bc_freqs, function(x) perkins_skill_score(x, obs_freqs_score))
+        
+      } else {
+        perkins_bc <- sapply(bc_freqs, function(x) perkins_skill_score(x, obs_freqs))
+        
+      }
+      
+      #Mean bias error
       mbe_bc     <- sapply(bc_ind, function(x) mean(unlist(mod_vals[x]), na.rm=TRUE) - mean(obs_vals, na.rm=TRUE))
     
       legend(position, legend=paste0(bc_methods, " (s=", round(perkins_bc, digits=2), ", MBE=", 
@@ -379,14 +436,12 @@ for (m in 1:length(metrics)) {
     } #variables
     
     dev.off()
-  # } #GCM/BC
+    
 } #metrics
 
 endCluster()
 
-#stopCluster(cl) #need to put this here, otherwise temporary .grd files created by parallel code become unavailable
-# 
-# "#AE3C60","#F3C33C", "#267778", "#82B4BB"
-# "#6EC3C1", "#335120", "#9DCC5F", "#0D5F8A"
-# "#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3"
+
+
+
 

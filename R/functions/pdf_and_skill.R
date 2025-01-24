@@ -14,6 +14,23 @@ perkins_skill_score <- function(model, obs, nbins=50) {
   return(skill)
 }
 
+perkins_skill_score_normalised <- function(model, obs) {
+  
+  
+  #First normalise probability density values to make sure skill score is 
+  #between 0-1
+  model <- model/sum(model)
+  obs   <- obs / sum(obs)
+  
+  
+  #Calculate skill score
+  skill <- sum(sapply(1:length(model), function(x) min(model[x], obs[x])), na.rm=TRUE)
+  
+  if(skill < 0 | skill >1) stop("wrong Perkins skill value determined")
+  
+  return(skill)
+}
+
 
 #Function to calculate probability densities
 hist_xy <- function(data, n=50) {
