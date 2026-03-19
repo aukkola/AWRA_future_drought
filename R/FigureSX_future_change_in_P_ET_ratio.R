@@ -271,3 +271,22 @@ add_raster_legend2(cols=cols_diff(len), limits=lims_diff[2:len],
 
 
 dev.off()
+
+
+
+
+
+vals <- values(hist_ratio)
+
+vals <- vals[-which(is.na(vals))]
+vals <- vals[-which(is.infinite(vals))]
+
+mean(vals)
+
+threshold = 0.7
+length(which(vals > threshold)) / length(vals)
+
+
+
+
+

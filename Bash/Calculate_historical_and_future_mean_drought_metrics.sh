@@ -19,7 +19,7 @@ path="/g/data/w97/amu561/Steven_CABLE_runs/"
 
 #Find scales
 #scale=`ls $path/drought_metrics`
-declare -a scale=("3" "24")
+declare -a scale=("3") # "24")
 
 
 #Set experiments
@@ -27,6 +27,7 @@ declare -a exp=("historical" "rcp45" "rcp85")
 
 #Set variables
 declare -a vars=("pr" "qtot" "sm_root")
+#declare -a vars=("sm_root")
 
 #Set metrics
 declare -a metrics=("duration" "rel_intensity" "frequency")
@@ -86,7 +87,7 @@ do
             
             outfile="${outdir}/Mean_${m}_${v}_${b}_${g}_${e}_${start_yr}_${end_yr}_scale_${s}.nc"
             
-            if [ ! -f ${outfile} ]; then
+          #  if [ ! -f ${outfile} ]; then
               
               if [ $m = "frequency" ]; then
                 
@@ -103,7 +104,7 @@ do
             
               fi
           
-            fi
+      #      fi
           
           done #metrics
         

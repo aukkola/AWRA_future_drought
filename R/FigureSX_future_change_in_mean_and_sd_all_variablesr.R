@@ -57,7 +57,9 @@ cols_diff <- colorRampPalette(col_opts)
 
 lims_diff <- c(-1000, -20, -10, -5, -2, 0, 2, 5, 10, 20, 1000)
 
-unit <- c("%") # (#expression("mm"~"month"^"-1"), expression("no. events 10 yrs"^"-1"))
+#Unit for legend (adding all the text here because otherwise have issues with the
+#expression)
+unit <- expression("Future change (mm"~"month"^"-1"*")") #, expression("no. events 10 yrs"^"-1"))
 
 #Level of model agreement for stippling (as fraction of models)
 agr_level <- 0.75
@@ -71,12 +73,12 @@ panel_cex=0.7
 
 
 ### Set up figure ###
-png(paste0(outdir, "/FigureSX", "_Mean_changes_in_mean_sd_of_all_variables", ".png"),
+png(paste0(outdir, "/FigureSX_Mean_changes_in_mean_sd_of_pr_and_ET.png"), #all_variables", ".png"),
     height=5.5, width=5, units="in", res=400) #width=10
 
 
 par(mai=c(0, 0.0, 0.1, 0.0))
-par(omi=c(0.1, 0.5, 0.4, 0.1))
+par(omi=c(0.1, 0.5, 0.3, 0.1))
 
 #par(mfcol=c(3, 3))
 par(bty="n")
@@ -86,7 +88,7 @@ par(bty="n")
 
 #layout(matrix(c(1:2,9, 3:4,9, 5:6,9, 7:8,9), nrow=3), heights=c(1, 1, 0.3))
 
-layout(matrix(c(1:3, 3, 4:6, 6), nrow=4, byrow=TRUE), heights=c(1, 0.3, 1, 0.3))
+layout(matrix(c(1, 3, 2, 4, 5,5), nrow=3, byrow=TRUE), heights=c(1, 1, 0.3))
 
 
 
@@ -260,7 +262,8 @@ for (v in 1:length(vars)) {
     
     
     #Variable label
-    if(p==1) mtext(side=3, line=1, font=2, text=var_labels[v], xpd=NA)
+    if(p==1) mtext(side=3, line=0.4, font=1, text=var_labels[v], xpd=NA)
+    
     
     
     # #Calculate and print land area where model changes are robust
@@ -277,6 +280,8 @@ for (v in 1:length(vars)) {
     
     
   }
+  
+  if(v==1) mtext(side=2, line=0.7, font=1, text="Mean", xpd=NA)
   
   # #Legend
   # if (v==1) {
@@ -368,7 +373,8 @@ for (v in 1:length(vars)) {
     
     
   }
-
+  if(v==1) mtext(side=2, line=0.7, font=1, text="Variability", xpd=NA)
+  
   
 } #vars
 
@@ -380,7 +386,7 @@ plot(1, type="n", bty="n", yaxt="n", xaxt="n")
 #Legend
 len <- length(lims_diff)-1
 add_raster_legend2(cols=cols_diff(len), limits=lims_diff[2:len],
-                   main_title=paste0("Change in standard deviation (", unit[v], ")"),
+                   main_title=unit,
                    plot_loc=c(0.3,0.7,0.35, 0.5),
                    title.cex=1.1, spt.cex=1, clip=TRUE, ysp_title_old=FALSE,
                    title_fac=0.3)

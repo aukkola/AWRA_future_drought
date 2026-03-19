@@ -291,6 +291,9 @@ for (m in 1:length(metrics)) {
       
       if(v==1) mtext(side=3, main_title[p], line=1, cex=1.2)
       
+      #y-label (variable label)
+      if(p==1) mtext(side=2, var_labels[v], line=9, cex=1.2)
+      
       
       #Add hatching if at least 2 models are not significant
       #(i.e. don't hatch if at least 3 models are significant)
